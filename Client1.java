@@ -1,8 +1,5 @@
-
 import java.net.*;
 import java.io.*;
-
-package sirs;
 
 public class Client1
 {
@@ -10,13 +7,24 @@ public class Client1
 	private int _calendar[][][];
 
 	public void Client1(){
-		int[][][] _calendar = new int[13][32][24]
+		int[][][] _calendar = new int[13][32][24];
 	}
 
    public static void main(String [] args)
    {
-      String serverName = args[0];
-      int port = Integer.parseInt(args[1]);
+   		String serverName = "";
+   		int port = 0;
+
+   		if(args.length != 2) {
+   			System.out.println("Too few arguments. Run using Client1 [hostname] [port]");
+   			System.exit(-1);
+   		}
+   		else {
+      		serverName = args[0];
+      		port = Integer.parseInt(args[1]);
+      	}
+
+      PasswordHash ph = new PasswordHash();
 
       System.out.println("What do you want to do?");
 
@@ -30,7 +38,7 @@ public class Client1
          DataOutputStream out = new DataOutputStream(outToServer);
          out.writeUTF("Hello from " + client.getLocalSocketAddress());
          InputStream inFromServer = client.getInputStream();
-         DataInputStream in = new Datutl.aInputStream(inFromServer);
+         DataInputStream in = new DataInputStream(inFromServer);
          System.out.println("Server says " + in.readUTF());
          client.close();
       }catch(IOException e)
