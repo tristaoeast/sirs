@@ -2,7 +2,8 @@ import java.net.*;
 import java.io.*;
 
 public class Client1
-{
+{ 
+
    public static void main(String [] args)
    {
       String serverName = args[0];
