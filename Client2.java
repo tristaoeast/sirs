@@ -7,10 +7,13 @@ public class Client2
 {
 
 	private int _calendar[][][];
+	private ServerSocket serverSocket;
  
-	public void Client2(){
+	public Client2(int port) throws IOException, SocketException{
 
 		int[][][] _calendar = new int[13][32][24];
+		serverSocket = new ServerSocket(port);
+		serverSocket.setSoTimeout(30000);
 	}
 
 	public boolean checkCalendarDate(int m, int d, int h){
@@ -21,6 +24,49 @@ public class Client2
 		else{ 
 			_calendar[m][d][h] = 1;
 			return true;
+		}
+	}
+
+	public void establishMeetingDate(Socket server){
+
+		String message = "";
+		char msg_char = ' ';
+   		String serverName = "";
+   		int port = 0;
+
+		try{
+			
+			OutputStream outToServer = server.getOutputStream();
+			DataOutputStream out = new DataOutputStream(outToServer);
+			InputStream inFromServer = server.getInputStream();
+			DataInputStream in = new DataInputStream(inFromServer);
+
+			while(!message.equals("ack:yes")){
+
+				message = in.readUTF();
+				System.out.println("Client1 says " + message);
+
+				int month = 0, day = 0, hour = 0;
+				String[] split1 = message.split("-");
+				String[] split2 = split1[0].split("/");
+
+				day = Integer.parseInt(split2[0]);
+				month = Integer.parseInt(split2[1]);
+				hour = Integer.parseInt(split1[1]);
+
+				if(!checkCalendarDate(month, day, hour)){
+
+					out.writeUTF("No");
+				}
+				else {
+					out.writeUTF("Yes");	
+				}
+			}
+			server.close();
+		}
+		catch(IOException e){
+
+			e.printStackTrace();
 		}
 	}
 
@@ -72,9 +118,16 @@ public class Client2
     		return s;
 	}
 
+	public Socket waitConnection() throws IOException{
+
+		System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
+		Socket server = serverSocket.accept();	
+
+		return server;
+	}
+
 	public static void main(String [] args){
 
-		Client2 _client = new Client2();
 		String message = "";
 		char msg_char = ' ';
    		String serverName = "";
@@ -90,13 +143,28 @@ public class Client2
       			port = Integer.parseInt(args[1]);
       		}
 
-      		authenticateUser(correctHash);
+		try{
+			Client2 client = new Client2(port);
 
-      		System.out.println("What do you want to do?");
+	      		authenticateUser(correctHash);
 
-		String troll = getInput();
+	      		System.out.println("What do you want to do?");
 
-		try
+			String troll = getInput();
+
+			Socket server = client.waitConnection();
+
+			client.establishMeetingDate(server);
+		}
+		catch(SocketException s){
+			System.out.println("Socket timed out!");
+		}
+		catch(IOException e){
+			e.printStackTrace();
+		}
+
+
+		/*try
 		{
 
 			 System.out.println("Connecting to " + serverName
@@ -160,6 +228,6 @@ public class Client2
 		catch(IOException e){
 
 			e.printStackTrace();
-		}
+		}*/
 	}
 }
