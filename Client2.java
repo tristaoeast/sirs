@@ -1,7 +1,7 @@
-package sirs;
-
 import java.net.*;
 import java.io.*;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
 public class Client2
 {
@@ -24,13 +24,78 @@ public class Client2
 		}
 	}
 
+	private static void authenticateUser(String correctHash){
+		System.out.println("Welcome back, Alice. Please enter your password:");
+
+     		PasswordHash ph = new PasswordHash();
+     		char[] passwd;
+     		Console cons = System.console();
+
+ 		if (cons != null){
+
+ 			try {
+
+     			while(!(PasswordHash.validatePassword(passwd = cons.readPassword("[%s]", "Password:"),correctHash)))
+      				System.out.println("Wrong password, please try again");
+      			java.util.Arrays.fill(passwd, ' ');
+      			System.out.println("Password is clear: " + passwd);
+
+      		}
+        	catch(NoSuchAlgorithmException e)
+        	{
+           		System.out.println("ERROR: " + e);
+        	}
+        	catch(InvalidKeySpecException e)
+        	{
+            		System.out.println("ERROR: " + e);
+        	}
+      		}
+      		else {
+      			System.err.println("No console.");
+           	 	System.exit(1);
+      		}
+	}
+
+	private static String getInput(){
+
+		String s = "";
+
+		try{
+
+        		BufferedReader bufferRead = new BufferedReader(new InputStreamReader(System.in));
+        		s = bufferRead.readLine();
+    		}
+    		catch(IOException e)
+    		{
+       	 		e.printStackTrace();
+    		}
+    		return s;
+	}
+
 	public static void main(String [] args){
 
 		Client2 _client = new Client2();
-		String serverName = args[0];
 		String message = "";
 		char msg_char = ' ';
-		int port = Integer.parseInt(args[1]);
+   		String serverName = "";
+   		int port = 0;
+   		String correctHash = "1000:aa78d57810a93e7378856693ecabf23fdd33325ec2778ab2:66d9c6667e6c48feb5c709ca0803de5db59ebdaeb29b9b64";
+
+   		if(args.length != 2) {
+   			System.err.println("Too few arguments. Run using Client1 [serverHostname] [serverPort]");
+   			System.exit(-1);
+   		}
+   		else {
+      			serverName = args[0];
+      			port = Integer.parseInt(args[1]);
+      		}
+
+      		authenticateUser(correctHash);
+
+      		System.out.println("What do you want to do?");
+
+		String troll = getInput();
+
 		try
 		{
 
