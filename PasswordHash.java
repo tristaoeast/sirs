@@ -208,7 +208,7 @@ public class PasswordHash
             // System.out.println("Enter password to generate hash:");
             // String pass = getInput();
             System.out.println("Alice password hash is: " + createHash("alice"));
-            System.out.println("Bob password hash is: " + createHash("B0bP4sSw0Rd"));
+            System.out.println("Bob password hash is: " + createHash("bob"));
         }
         catch(NoSuchAlgorithmException e)
         {
