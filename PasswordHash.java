@@ -33,6 +33,8 @@ import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
+import java.io.*;
+
 /*
  * PBKDF2 salted password hashing.
  * Author: havoc AT defuse.ca
@@ -186,50 +188,82 @@ public class PasswordHash
             return hex;
     }
 
-    /**
-     * Tests the basic functionality of the PasswordHash class
-     *
-     * @param   args        ignored
-     */
+    public String getInput(){
+        String s = "";
+        try{
+            BufferedReader bufferRead = new BufferedReader(new InputStreamReader(System.in));
+            s = bufferRead.readLine();
+        }
+        catch(IOException e)
+        {
+            e.printStackTrace();
+        }
+        return s;
+    }
+
     public static void main(String[] args)
     {
         try
         {
-            // Print out 10 hashes
-            for(int i = 0; i < 10; i++)
-                System.out.println(PasswordHash.createHash("p\r\nassw0Rd!"));
-
-            // Test password validation
-            boolean failure = false;
-            System.out.println("Running tests...");
-            for(int i = 0; i < 100; i++)
-            {
-                String password = ""+i;
-                String hash = createHash(password);
-                String secondHash = createHash(password);
-                if(hash.equals(secondHash)) {
-                    System.out.println("FAILURE: TWO HASHES ARE EQUAL!");
-                    failure = true;
-                }
-                String wrongPassword = ""+(i+1);
-                if(validatePassword(wrongPassword, hash)) {
-                    System.out.println("FAILURE: WRONG PASSWORD ACCEPTED!");
-                    failure = true;
-                }
-                if(!validatePassword(password, hash)) {
-                    System.out.println("FAILURE: GOOD PASSWORD NOT ACCEPTED!");
-                    failure = true;
-                }
-            }
-            if(failure)
-                System.out.println("TESTS FAILED!");
-            else
-                System.out.println("TESTS PASSED!");
+            // System.out.println("Enter password to generate hash:");
+            // String pass = getInput();
+            System.out.println("Alice password hash is: " + createHash("alice"));
+            System.out.println("Bob password hash is: " + createHash("B0bP4sSw0Rd"));
         }
-        catch(Exception ex)
+        catch(NoSuchAlgorithmException e)
         {
-            System.out.println("ERROR: " + ex);
+            System.out.println("ERROR: " + e);
+        }
+        catch(InvalidKeySpecException e)
+        {
+            System.out.println("ERROR: " + e);
         }
     }
+
+    // /**
+    //  * Tests the basic functionality of the PasswordHash class
+    //  *
+    //  * @param   args        ignored
+    //  */
+    // public static void main(String[] args)
+    // {
+    //     try
+    //     {
+    //         // Print out 10 hashes
+    //         for(int i = 0; i < 10; i++)
+    //             System.out.println(PasswordHash.createHash("p\r\nassw0Rd!"));
+
+    //         // Test password validation
+    //         boolean failure = false;
+    //         System.out.println("Running tests...");
+    //         for(int i = 0; i < 100; i++)
+    //         {
+    //             String password = ""+i;
+    //             String hash = createHash(password);
+    //             String secondHash = createHash(password);
+    //             if(hash.equals(secondHash)) {
+    //                 System.out.println("FAILURE: TWO HASHES ARE EQUAL!");
+    //                 failure = true;
+    //             }
+    //             String wrongPassword = ""+(i+1);
+    //             if(validatePassword(wrongPassword, hash)) {
+    //                 System.out.println("FAILURE: WRONG PASSWORD ACCEPTED!");
+    //                 failure = true;
+    //             }
+    //             if(!validatePassword(password, hash)) {
+    //                 System.out.println("FAILURE: GOOD PASSWORD NOT ACCEPTED!");
+    //                 failure = true;
+    //             }
+    //         }
+    //         if(failure)
+    //             System.out.println("TESTS FAILED!");
+    //         else
+    //             System.out.println("TESTS PASSED!");
+    //     }
+    //     catch(Exception ex)
+    //     {
+    //         System.out.println("ERROR: " + ex);
+    //     }
+    // }
 
 }
