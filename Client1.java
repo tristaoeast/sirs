@@ -12,6 +12,34 @@ public class Client1
 		int[][][] _calendar = new int[13][32][24];
 	}
 
+	private static void authenticateUser(String correctHash){
+		System.out.println("Welcome back, Alice. Please enter your password:");
+
+     	PasswordHash ph = new PasswordHash();
+     	char[] passwd;
+     	Console cons = System.console();
+ 		if (cons != null){
+ 			try {
+     			while(!(PasswordHash.validatePassword(passwd = cons.readPassword("[%s]", "Password:"),correctHash)))
+      				System.out.println("Wrong password, please try again");
+      			java.util.Arrays.fill(passwd, ' ');
+      			System.out.println("Password is clear: " + passwd);
+      		}
+        	catch(NoSuchAlgorithmException e)
+        	{
+           		System.out.println("ERROR: " + e);
+        	}
+        	catch(InvalidKeySpecException e)
+        	{
+            	System.out.println("ERROR: " + e);
+        	}
+      	}
+      	else {
+      		System.err.println("No console.");
+            System.exit(1);
+      	}
+	}
+
 	private static String getInput(){
 		String s = "";
 		try{
@@ -40,31 +68,7 @@ public class Client1
       		port = Integer.parseInt(args[1]);
       	}
 
-      	System.out.println("Welcome back, Alice. Please enter your password:");
-
-     	PasswordHash ph = new PasswordHash();
-     	char[] passwd;
-     	Console cons = System.console();
- 		if (cons != null){
- 			try {
-     			while(!(PasswordHash.validatePassword(passwd = cons.readPassword("[%s]", "Password:"),correctHash)))
-      				System.out.println("Wrong password, please try again");
-      			java.util.Arrays.fill(passwd, ' ');
-      		}
-        	catch(NoSuchAlgorithmException e)
-        	{
-           		System.out.println("ERROR: " + e);
-        	}
-        	catch(InvalidKeySpecException e)
-        	{
-            	System.out.println("ERROR: " + e);
-        	}
-      	}
-      	else {
-      		System.err.println("No console.");
-            System.exit(1);
-      	}
-      	
+      	authenticateUser(correctHash);
 
       	System.out.println("What do you want to do?");
       	
