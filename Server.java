@@ -2,14 +2,18 @@ import java.net.*;
 import java.io.*;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 
 public class Server extends Thread
 {
    private ServerSocket serverSocket;
-   private TreeMap keys;
+   private TreeMap privKeyFiles;
+   private TreeMap publicKeyFiles;
    private TreeMap<String, String> addressesMap;
    private TreeMap<String, Long> noncesMap;
-   
+   private RSA rsa;
+   private Utils utils;
    
    public Server(int port) throws IOException
    {
@@ -18,10 +22,12 @@ public class Server extends Thread
       addressesMap = new TreeMap<String, String>();
       //the nonce is the key, the timestamp in miliseconds is the value
       noncesMap = new TreeMap<String, Long>();
+      rsa = new RSA();
+      utils = new Utils();
 
    }
 
-   public boolean validNounce(String nonce, long currentTimeStamp)
+   private boolean validNounce(String nonce, long currentTimeStamp) throws IOException
    {
       if(noncesMap.containsKey(nonce)){
          // long tempTimeStamp = (long)noncesMap.get(nonce);
@@ -33,7 +39,7 @@ public class Server extends Thread
          return true;
    }
 
-   public boolean withinTimeFrame(long currentTimeStamp, long oldTimeStamp)
+   private boolean withinTimeFrame(long currentTimeStamp, long oldTimeStamp)
    {
       if((currentTimeStamp - oldTimeStamp) < 30000)
          return true;
@@ -41,63 +47,104 @@ public class Server extends Thread
          return false;
    }
 
+   private void wrongFormatMessage(Socket server, DataOutputStream out) throws IOException
+   {
+      String errorMessage = "ERROR: Message with wrong format received. Aborting current connection...";
+      System.out.println(errorMessage);
+      out.writeUTF("Server:Server,ERROR" + errorMessage);
+      server.close();
+   }
+
+   private void expiredMessage(Socket server, DataOutputStream out) throws IOException
+   {
+      String errorMessage = "ERROR: Message with expired timstamp pr invalid nonce received. Aborting current connection...";
+      System.out.println(errorMessage);
+      out.writeUTF("Server:Server,ERROR" + errorMessage);
+      server.close();
+   }
+
+   private void wrongCredentialsProvided(Socket server, DataOutputStream out) throws IOException
+   {
+      String errorMessage = "ERROR: Wrong credentials provided. Aborting current connection...";
+      System.out.println(errorMessage);
+      out.writeUTF("Server:Server,ERROR" + errorMessage);
+      server.close();
+   }
+
+
    public void run()
    {
       while(true)
       {
          try
          {
-            Utils utils = new Utils();
             System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
             Socket server = serverSocket.accept();
             // SocketAddress structure: hostname/ip:port
             SocketAddress remoteAddr = server.getRemoteSocketAddress();
             System.out.println("Just connected to " + remoteAddr);
             DataInputStream in = new DataInputStream(server.getInputStream());
+            DataOutputStream out = new DataOutputStream(server.getOutputStream());
             // inMsg structure: User:{Action,User,Nonce,TimeStamp}
             String inMsg = in.readUTF();
             String[] id = inMsg.split(":");
-            //TODO: Decrypt messages
+            //TODO: Decrypt id[1]
             String[] params = null;
             if(id.length == 2)
                params = id[1].split(",");
             else {
-               String errorMessage = "ERROR: Wrong message format received. Aborting connection...";
-               System.out.println(errorMessage);
-               server.close();
+               wrongFormatMessage(server, out);
                continue;
             }
-            if(id[0].equals(params[1])) { //Checks if it is the actual user
-               if(params[0].equals("Reg")) {
-                  if(params.length == 4) {
+            if(id[0].equals(params[0]) && (params.length > 1)) { // Checks if it is the actual user
+               
+               if(params[1].equals("REG")) { // Checks what action this message performs
+                  if(params.length == 4) { // Checks if the  
                      if((validNounce(params[2], utils.getTimeStamp())) 
                         && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(params[3]))) {
-                        
                         //If we reach this point is because everything checks out, so the registration is successful
                         addressesMap.put(id[0], remoteAddr.toString());
                         noncesMap.put(params[2], utils.getTimeStamp());
-
+                        String serverNonce = utils.generateRandomNonce();
+                        //TODO: encrypt part of the message after ":"
+                        out.writeUTF("Server:Server,ACKREG," + id[0] + "," + remoteAddr.toString() + "," + params[2] + "," + serverNonce);
                      }
-
+                     else {
+                        expiredMessage(server, out);
+                        continue;   
+                     }
                   }
-
-                  // addressesMap.put(id[0],remoteAddr.toString());
-                  // noncesMap.add(params[1]);
+                  else {
+                     wrongFormatMessage(server, out);
+                     continue;
+                  }
                }
-            }
-            else {
-               //Wrong credentials. Abort connection
+               else if(params[1].equals("ERROR") && (params.length==3)) { // If an error message is received from the client
+                  System.out.println("Client says: " + params[2]);
+                  server.close();
+                  continue;
+               }
+
             }
 
-            DataOutputStream out = new DataOutputStream(server.getOutputStream());
-            out.writeUTF("Thank you for connecting to "
-              + server.getLocalSocketAddress() + "\nGoodbye!");
+            else {
+               wrongCredentialsProvided(server, out);
+               continue;
+            }
             server.close();
          }catch(SocketTimeoutException s)
          {
             System.out.println("Socket timed out!");
             break;
          }catch(IOException e)
+         {
+            e.printStackTrace();
+            break;
+         }catch(NoSuchAlgorithmException e)
+         {
+            e.printStackTrace();
+            break;
+         }catch(NoSuchProviderException e)
          {
             e.printStackTrace();
             break;
