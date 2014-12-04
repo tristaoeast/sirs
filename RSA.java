@@ -31,7 +31,7 @@ public class RSA
 
 		String keyFileName = "./" + userName + "Public.key";
 		PublicKey pubKey = readPublicKeyFromFile(keyFileName);
-		Cipher cipher = Cipher.getInstance("RSA");
+		Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
 		cipher.init(Cipher.ENCRYPT_MODE, pubKey);
 		byte[] cipherData = cipher.doFinal(data);
 		return cipherData;
@@ -44,7 +44,7 @@ public class RSA
 		String keyFileName = "./" + userName + "Private.key";
 				System.out.println("KeyFileName:" + keyFileName);
 		PrivateKey privKey = readPrivateKeyFromFile(keyFileName);
-		Cipher cipher = Cipher.getInstance("RSA");
+		Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
 		cipher.init(Cipher.ENCRYPT_MODE, privKey);
 		byte[] cipherData = cipher.doFinal(data);
 		return cipherData;
@@ -56,7 +56,7 @@ public class RSA
 		
 		String keyFileName = "./" + userName + "Public.key";
 		PublicKey pubKey = readPublicKeyFromFile(keyFileName);
-		Cipher cipher = Cipher.getInstance("RSA");
+		Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
 		cipher.init(Cipher.DECRYPT_MODE, pubKey);
 		byte[] plainData = cipher.doFinal(data);
 		return plainData;
@@ -68,7 +68,7 @@ public class RSA
 		
 		String keyFileName = "./" + userName + "Private.key";
 		PrivateKey privKey = readPrivateKeyFromFile(keyFileName);
-		Cipher cipher = Cipher.getInstance("RSA");
+		Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
 		cipher.init(Cipher.DECRYPT_MODE, privKey);
 		byte[] plainData = cipher.doFinal(data);
 		return plainData;
@@ -109,7 +109,7 @@ public class RSA
 	  	try {
 		    BigInteger m = (BigInteger) oin.readObject();
 		    BigInteger e = (BigInteger) oin.readObject();
-		    RSAPublicKeySpec keySpec = new RSAPublicKeySpec(m, e);
+		    RSAPrivateKeySpec keySpec = new RSAPrivateKeySpec(m, e);
 		    KeyFactory fact = KeyFactory.getInstance("RSA");
 		    PrivateKey privKey = fact.generatePrivate(keySpec);
 		    return privKey;
@@ -145,9 +145,12 @@ public class RSA
 
 			// getInput();
 			
-			String msg = "Alice,REG,"+utils.generateRandomNonce()+","+utils.getTimeStamp();
+			String msg = "Alice,REG,";//+utils.generateRandomNonce()+","+utils.getTimeStamp();
 			System.out.println("Message to be encrypted:" + msg);
-			byte[] signedData = rsa.privateEncrypt(msg.getBytes("UTF-8"), "Alice");
+			byte[] byteMsg = msg.getBytes("UTF-8");
+			System.out.println(byteMsg.length);
+			byte[] signedData = rsa.privateEncrypt(byteMsg, "Alice");
+			System.out.println(signedData.length);
 			byte[] ciphSignedData = rsa.publicEncrypt(signedData, "Server");
 			String ciphSignedMsg = new String(ciphSignedData, "UTF-8");
 			System.out.println("Signed and cipheres data: " + ciphSignedMsg);
