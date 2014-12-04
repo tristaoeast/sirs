@@ -1,4 +1,6 @@
 all:
 	javac *.java
 clean:
-	rm *.class *.key
+	rm *.class
+cleankeys:
+	rm *.key

@@ -11,7 +11,10 @@ public class RSA
 	public void generateKeyPair(String userName) throws NoSuchAlgorithmException,InvalidKeySpecException,IOException {
 
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-		kpg.initialize(2048);
+		if(userName.equals("Server"))
+			kpg.initialize(4096);
+		else
+			kpg.initialize(2048);
 		KeyPair kp = kpg.genKeyPair();
 		Key publicKey = kp.getPublic();
 		Key privateKey = kp.getPrivate();
@@ -154,7 +157,8 @@ public class RSA
 			byte[] ciphSignedData = rsa.publicEncrypt(signedData, "Server");
 			String ciphSignedMsg = new String(ciphSignedData, "UTF-8");
 			System.out.println("Signed and cipheres data: " + ciphSignedMsg);
-			getInput();
+			// getInput();
+			System.out.println(ciphSignedMsg.getBytes("UTF-8").length);
 			byte[] deciphSignedData = rsa.privateDecrypt(ciphSignedMsg.getBytes("UTF-8"), "Server");
 			byte[] deciphData = rsa.publicDecrypt(deciphSignedData, "Alice");
 			String deciphMsg = new String(deciphData, "UTF-8");

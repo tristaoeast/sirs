@@ -9,13 +9,13 @@ import java.util.GregorianCalendar;
 public class Utils 
 {
 	public static final int NONCE_BYTE_SIZE = 8;
+    public static final int IV_BYTE_SIZE = 16;
 
     private GregorianCalendar cal;
 
     public Utils (){
         cal = new GregorianCalendar();
     }
-
 
     public String toHex(byte[] array)
     {
@@ -26,6 +26,11 @@ public class Utils
             return String.format("%0" + paddingLength + "d", 0) + hex;
         else
             return hex;
+    }
+
+    public byte[] hexToByteArray(String hex)
+    {
+        return new BigInteger(hex,16).toByteArray();
     }
 
 	public String generateRandomNonce() throws NoSuchAlgorithmException, NoSuchProviderException
@@ -39,6 +44,19 @@ public class Utils
         //return nonce
         return toHex(nonce);
     }
+
+    public String generateRandomIV() throws NoSuchAlgorithmException, NoSuchProviderException
+    {
+        //Always use a SecureRandom generator
+        SecureRandom sr = SecureRandom.getInstance("SHA1PRNG");
+        //Create array for nonce
+        byte[] iv = new byte[IV_BYTE_SIZE];
+        //Get a random nonce
+        sr.nextBytes(iv);
+        //return nonce
+        return toHex(iv);
+    }
+
 
     public long getTimeStamp()
     {
