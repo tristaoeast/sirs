@@ -20,8 +20,8 @@ public class RSA
 		RSAPublicKeySpec pub = fact.getKeySpec(kp.getPublic(), RSAPublicKeySpec.class);
 		RSAPrivateKeySpec priv = fact.getKeySpec(kp.getPrivate(), RSAPrivateKeySpec.class);
 
-		saveToFile("/"+userName+"Public.key", pub.getModulus(), pub.getPublicExponent());
-		saveToFile("/"+userName+"Private.key", priv.getModulus(), priv.getPrivateExponent());
+		saveToFile(userName+"Public.key", pub.getModulus(), pub.getPublicExponent());
+		saveToFile(userName+"Private.key", priv.getModulus(), priv.getPrivateExponent());
 
 	}
 
@@ -29,7 +29,7 @@ public class RSA
 		throws IOException,NoSuchAlgorithmException,InvalidKeySpecException,IllegalBlockSizeException,
 		NoSuchPaddingException,InvalidKeyException,BadPaddingException {
 
-		String keyFileName = "/" + userName + "Public.key";
+		String keyFileName = "./" + userName + "Public.key";
 		PublicKey pubKey = readPublicKeyFromFile(keyFileName);
 		Cipher cipher = Cipher.getInstance("RSA");
 		cipher.init(Cipher.ENCRYPT_MODE, pubKey);
@@ -41,7 +41,8 @@ public class RSA
 		throws IOException,NoSuchAlgorithmException,InvalidKeySpecException,IllegalBlockSizeException,
 		NoSuchPaddingException,InvalidKeyException,BadPaddingException {
 		
-		String keyFileName = "/" + userName + "Private.key";
+		String keyFileName = "./" + userName + "Private.key";
+				System.out.println("KeyFileName:" + keyFileName);
 		PrivateKey privKey = readPrivateKeyFromFile(keyFileName);
 		Cipher cipher = Cipher.getInstance("RSA");
 		cipher.init(Cipher.ENCRYPT_MODE, privKey);
@@ -53,7 +54,7 @@ public class RSA
 		throws IOException,NoSuchAlgorithmException,InvalidKeySpecException,IllegalBlockSizeException,
 		NoSuchPaddingException,InvalidKeyException,BadPaddingException {
 		
-		String keyFileName = "/" + userName + "Public.key";
+		String keyFileName = "./" + userName + "Public.key";
 		PublicKey pubKey = readPublicKeyFromFile(keyFileName);
 		Cipher cipher = Cipher.getInstance("RSA");
 		cipher.init(Cipher.DECRYPT_MODE, pubKey);
@@ -65,7 +66,7 @@ public class RSA
 		throws IOException,NoSuchAlgorithmException,InvalidKeySpecException,IllegalBlockSizeException,
 		NoSuchPaddingException,InvalidKeyException,BadPaddingException {
 		
-		String keyFileName = "/" + userName + "Private.key";
+		String keyFileName = "./" + userName + "Private.key";
 		PrivateKey privKey = readPrivateKeyFromFile(keyFileName);
 		Cipher cipher = Cipher.getInstance("RSA");
 		cipher.init(Cipher.DECRYPT_MODE, privKey);
@@ -142,9 +143,9 @@ public class RSA
 			rsa.generateKeyPair("Alice");
 			rsa.generateKeyPair("Server");
 
-			getInput();
+			// getInput();
 			
-			String msg = "Alice,REG,"+utils.generateRandomNonce()+utils.getTimeStamp();
+			String msg = "Alice,REG,"+utils.generateRandomNonce()+","+utils.getTimeStamp();
 			System.out.println("Message to be encrypted:" + msg);
 			byte[] signedData = rsa.privateEncrypt(msg.getBytes("UTF-8"), "Alice");
 			byte[] ciphSignedData = rsa.publicEncrypt(signedData, "Server");
