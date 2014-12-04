@@ -7,17 +7,38 @@ public class Server extends Thread
 {
    private ServerSocket serverSocket;
    private TreeMap keys;
-   private TreeMap addressesMap;
-   private TreeSet noncesSet;
+   private TreeMap<String, String> addressesMap;
+   private TreeMap<String, Long> noncesMap;
    
    
    public Server(int port) throws IOException
    {
       serverSocket = new ServerSocket(port);
       serverSocket.setSoTimeout(30000);
-      addressesMap = new TreeMap<String,String>();
-      noncesSet = new TreeSet<String>();
+      addressesMap = new TreeMap<String, String>();
+      //the nonce is the key, the timestamp in miliseconds is the value
+      noncesMap = new TreeMap<String, Long>();
 
+   }
+
+   public boolean validNounce(String nonce, long currentTimeStamp)
+   {
+      if(noncesMap.containsKey(nonce)){
+         // long tempTimeStamp = (long)noncesMap.get(nonce);
+         if(!(withinTimeFrame(currentTimeStamp, noncesMap.get(nonce))))
+               noncesMap.remove(nonce);
+         return false;
+      }
+      else
+         return true;
+   }
+
+   public boolean withinTimeFrame(long currentTimeStamp, long oldTimeStamp)
+   {
+      if((currentTimeStamp - oldTimeStamp) < 30000)
+         return true;
+      else
+         return false;
    }
 
    public void run()
@@ -26,20 +47,46 @@ public class Server extends Thread
       {
          try
          {
-            // Utils utils = new Utils();
+            Utils utils = new Utils();
             System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
             Socket server = serverSocket.accept();
             // SocketAddress structure: hostname/ip:port
             SocketAddress remoteAddr = server.getRemoteSocketAddress();
             System.out.println("Just connected to " + remoteAddr);
             DataInputStream in = new DataInputStream(server.getInputStream());
-            // inMsg structure: User:Action:Nonce
+            // inMsg structure: User:{Action,User,Nonce,TimeStamp}
             String inMsg = in.readUTF();
             String[] id = inMsg.split(":");
-            String[] params = id[1].split(",");
-            if(params[0].equals("Reg")){
-               // addressesMap.put(id[0],remoteAddr.toString());
-               // noncesSet.add(params[1]);
+            //TODO: Decrypt messages
+            String[] params = null;
+            if(id.length == 2)
+               params = id[1].split(",");
+            else {
+               String errorMessage = "ERROR: Wrong message format received. Aborting connection...";
+               System.out.println(errorMessage);
+               server.close();
+               continue;
+            }
+            if(id[0].equals(params[1])) { //Checks if it is the actual user
+               if(params[0].equals("Reg")) {
+                  if(params.length == 4) {
+                     if((validNounce(params[2], utils.getTimeStamp())) 
+                        && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(params[3]))) {
+                        
+                        //If we reach this point is because everything checks out, so the registration is successful
+                        addressesMap.put(id[0], remoteAddr.toString());
+                        noncesMap.put(params[2], utils.getTimeStamp());
+
+                     }
+
+                  }
+
+                  // addressesMap.put(id[0],remoteAddr.toString());
+                  // noncesMap.add(params[1]);
+               }
+            }
+            else {
+               //Wrong credentials. Abort connection
             }
 
             DataOutputStream out = new DataOutputStream(server.getOutputStream());

@@ -2,12 +2,20 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.math.BigInteger;
+import java.util.GregorianCalendar;
 
 
 
 public class Utils 
 {
-	public static final int NONCE_BYTE_SIZE = 4;
+	public static final int NONCE_BYTE_SIZE = 8;
+
+    private GregorianCalendar cal;
+
+    public Utils (){
+        cal = new GregorianCalendar();
+    }
+
 
     public String toHex(byte[] array)
     {
@@ -20,7 +28,7 @@ public class Utils
             return hex;
     }
 
-	public String getNonce() throws NoSuchAlgorithmException, NoSuchProviderException
+	public String generateRandomNonce() throws NoSuchAlgorithmException, NoSuchProviderException
     {
         //Always use a SecureRandom generator
         SecureRandom sr = SecureRandom.getInstance("SHA1PRNG");
@@ -32,12 +40,18 @@ public class Utils
         return toHex(nonce);
     }
 
+    public long getTimeStamp()
+    {
+        return cal.getTimeInMillis();
+    }
+
+
     public static void main(String[] args)
     {
     	try
     	{
     		Utils utils = new Utils();
-    		System.out.println("Genereated nonce successfully: " + utils.getNonce());
+    		System.out.println("Genereated nonce successfully: " + utils.generateRandomNonce());
     	}
     	catch(NoSuchProviderException e)
     	{
