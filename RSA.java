@@ -31,7 +31,7 @@ public class RSA
 
 		String keyFileName = "./" + userName + "Public.key";
 		PublicKey pubKey = readPublicKeyFromFile(keyFileName);
-		Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
+		Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 		cipher.init(Cipher.ENCRYPT_MODE, pubKey);
 		byte[] cipherData = cipher.doFinal(data);
 		return cipherData;
@@ -44,7 +44,7 @@ public class RSA
 		String keyFileName = "./" + userName + "Private.key";
 				System.out.println("KeyFileName:" + keyFileName);
 		PrivateKey privKey = readPrivateKeyFromFile(keyFileName);
-		Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
+		Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 		cipher.init(Cipher.ENCRYPT_MODE, privKey);
 		byte[] cipherData = cipher.doFinal(data);
 		return cipherData;
@@ -56,7 +56,7 @@ public class RSA
 		
 		String keyFileName = "./" + userName + "Public.key";
 		PublicKey pubKey = readPublicKeyFromFile(keyFileName);
-		Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
+		Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 		cipher.init(Cipher.DECRYPT_MODE, pubKey);
 		byte[] plainData = cipher.doFinal(data);
 		return plainData;
@@ -68,7 +68,7 @@ public class RSA
 		
 		String keyFileName = "./" + userName + "Private.key";
 		PrivateKey privKey = readPrivateKeyFromFile(keyFileName);
-		Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
+		Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 		cipher.init(Cipher.DECRYPT_MODE, privKey);
 		byte[] plainData = cipher.doFinal(data);
 		return plainData;
@@ -145,7 +145,7 @@ public class RSA
 
 			// getInput();
 			
-			String msg = "Alice,REG,";//+utils.generateRandomNonce()+","+utils.getTimeStamp();
+			String msg = "Alice,REG,"+utils.generateRandomNonce()+","+utils.getTimeStamp();
 			System.out.println("Message to be encrypted:" + msg);
 			byte[] byteMsg = msg.getBytes("UTF-8");
 			System.out.println(byteMsg.length);
