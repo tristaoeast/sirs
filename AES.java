@@ -11,6 +11,10 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.KeyStore;
+import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
  
 public class AES {
   
@@ -54,6 +58,21 @@ public class AES {
     return raw;
   }
 
+
+  public void writeKeyToFile(byte[] secretKey, String filename) throws FileNotFoundException,IOException{
+    FileOutputStream fos = new FileOutputStream(filename);
+    fos.write(secretKey);
+    fos.close();
+  }
+
+  public byte[] readKeyFromFile(String filename) throws FileNotFoundException,IOException{
+    FileInputStream fis = new FileInputStream(filename);
+    byte[] secretKey = new byte[32];
+    fis.read(secretKey);
+    fis.close();
+    return secretKey;
+  }
+
   // public byte[] generateSecretKey()
   // {
   //   // Get the KeyGenerator
@@ -72,13 +91,13 @@ public class AES {
   //   return raw;
   // }
 
-  public void createKeyStore(){
+  public void createKeyStore(String keyStoreName){
     
     // store away the keystore
     java.io.FileOutputStream fos = null;
     try {
       KeyStore ks = KeyStore.getInstance("JKS");
-      fos = new java.io.FileOutputStream("keyStore");
+      fos = new java.io.FileOutputStream(keyStoreName);
       char[] password = "q2w3e4r5t6y7".toCharArray();
       ks.store(fos, password);
     } catch(Exception e) {
@@ -112,16 +131,28 @@ public class AES {
     try {
       AES aes = new AES();
       Utils utils = new Utils();
-      byte[] secretKey = aes.secretKeyToByteArray(aes.generateSecretKey());
-      SecretKey secretKeyAlice = aes.generateSecretKey();
-      SecretKey secretKeyBob = aes.generateSecretKey();
-      aes.createKeyStore();
-      // String iv = "6caa81ea29dd0496";
+      String ptext = "PLAINTEXT";
       String iv = utils.generateRandomIV();
-      System.out.println(iv);
+      byte[] secretKey = aes.secretKeyToByteArray(aes.generateSecretKey());
+      byte[] secretKeyAlice = aes.secretKeyToByteArray(aes.generateSecretKey());
+      byte[] secretKeyBob = aes.secretKeyToByteArray(aes.generateSecretKey());
+      System.out.println(secretKeyBob.length);
+      aes.writeKeyToFile(secretKeyBob,"BobKeyStore");
+      byte[] temp = aes.readKeyFromFile("BobKeyStore");
+      byte[] ciphertext = aes.encrypt(ptext, secretKeyBob, iv);
+      String deciphertext = aes.decrypt(ciphertext,temp,iv);
+      System.out.println(deciphertext);
 
-      String ptext = "Alice,REG,"+utils.generateRandomNonce()+","+utils.getTimeStamp();
-      System.out.println("plain:   " + ptext);
+
+      // aes.createKeyStore("ServerKeyStore");
+      // aes.createKeyStore("AliceKeyStore");
+      // aes.createKeyStore("BobKeyStore");
+      // String iv = "6caa81ea29dd0496";
+      // String iv = utils.generateRandomIV();
+      // System.out.println(iv);
+
+      // String ptext = "Alice,REG,"+utils.generateRandomNonce()+","+utils.getTimeStamp();
+      // System.out.println("plain:   " + ptext);
       
 
     //   Utils utils = new Utils();
