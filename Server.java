@@ -12,7 +12,7 @@ public class Server extends Thread
    private TreeMap publicKeyFiles;
    private TreeMap<String, String> addressesMap;
    private TreeMap<String, Long> noncesMap;
-   private RSA rsa;
+   private AES aes;
    private Utils utils;
    
    public Server(int port) throws IOException
@@ -22,7 +22,7 @@ public class Server extends Thread
       addressesMap = new TreeMap<String, String>();
       //the nonce is the key, the timestamp in miliseconds is the value
       noncesMap = new TreeMap<String, Long>();
-      rsa = new RSA();
+      aes = new AES();
       utils = new Utils();
 
    }
@@ -71,6 +71,13 @@ public class Server extends Thread
       server.close();
    }
 
+   private void sendMessage(DataOutputStream out, String plaintext) throws NoSuchAlgorithmException,NoSuchProviderException{
+      String iv = utils.generateRandomIV();
+
+
+      // out.writeUTF("Server:Server,ACKREG," + id[0] + "," + remoteAddr.toString() + "," + params[2] + "," + serverNonce + "," + utils.getTimeStamp());
+   }
+
 
    public void run()
    {
@@ -90,7 +97,7 @@ public class Server extends Thread
             String[] id = inMsg.split(":");
             //TODO: Decrypt id[1]
             String[] params = null;
-            if(id.length == 2)
+            if(id.length == 3)
                params = id[1].split(",");
             else {
                wrongFormatMessage(server, out);
@@ -107,7 +114,8 @@ public class Server extends Thread
                         noncesMap.put(params[2], utils.getTimeStamp());
                         String serverNonce = utils.generateRandomNonce();
                         //TODO: encrypt part of the message after ":"
-                        out.writeUTF("Server:Server,ACKREG," + id[0] + "," + remoteAddr.toString() + "," + params[2] + "," + serverNonce);
+                        sendMessage(out, "Server,ACKREG," + id[0] + "," + remoteAddr.toString() + "," + params[2] + "," + serverNonce + "," + utils.getTimeStamp());
+                        
                      }
                      else {
                         expiredMessage(server, out);

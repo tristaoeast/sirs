@@ -8,8 +8,8 @@ import java.io.UnsupportedEncodingException;
 
 public class Utils 
 {
-	public static final int NONCE_BYTE_SIZE = 16;
-    public static final int IV_BYTE_SIZE = 16;
+	public static final int NONCE_BYTE_SIZE = 8;
+    public static final int IV_BYTE_SIZE = 8;
 
     private GregorianCalendar cal;
 
@@ -51,9 +51,9 @@ public class Utils
         SecureRandom sr = SecureRandom.getInstance("SHA1PRNG");
         //Create array for nonce
         byte[] iv = new byte[IV_BYTE_SIZE];
-        //Get a random nonce
+        //Get a random iv
         sr.nextBytes(iv);
-        //return nonce
+        //return iv
         return toHex(iv);
     }
 

@@ -4,11 +4,13 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
-import java.util.GregorianCalendar;
+// import java.util.GregorianCalendar;
 import java.security.NoSuchAlgorithmException; 
+import java.io.UnsupportedEncodingException;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.security.KeyStore;
  
 public class AES {
   
@@ -28,22 +30,68 @@ public class AES {
     return encryptionKey;
   }
 
-  public byte[] generateSecretKey()
+  public SecretKey generateSecretKey()
   {
     // Get the KeyGenerator
-    byte[] raw = null;
+    // byte[] raw = null;
+    SecretKey skey = null;
     try{
       KeyGenerator kgen = KeyGenerator.getInstance("AES");
       kgen.init(256);
 
       // Generate the secret key specs.
-      SecretKey skey = kgen.generateKey();
-      raw = skey.getEncoded();
+      skey = kgen.generateKey();
+      // raw = skey.getEncoded();
     } catch (NoSuchAlgorithmException e) {
       e.printStackTrace();
     }
 
+    return skey;
+  }
+
+  public byte[] secretKeyToByteArray(SecretKey skey){
+    byte[] raw = skey.getEncoded();
     return raw;
+  }
+
+  // public byte[] generateSecretKey()
+  // {
+  //   // Get the KeyGenerator
+  //   byte[] raw = null;
+  //   try{
+  //     KeyGenerator kgen = KeyGenerator.getInstance("AES");
+  //     kgen.init(256);
+
+  //     // Generate the secret key specs.
+  //     SecretKey skey = kgen.generateKey();
+  //     raw = skey.getEncoded();
+  //   } catch (NoSuchAlgorithmException e) {
+  //     e.printStackTrace();
+  //   }
+
+  //   return raw;
+  // }
+
+  public void createKeyStore(){
+    
+    // store away the keystore
+    java.io.FileOutputStream fos = null;
+    try {
+      KeyStore ks = KeyStore.getInstance("JKS");
+      fos = new java.io.FileOutputStream("keyStore");
+      char[] password = "q2w3e4r5t6y7".toCharArray();
+      ks.store(fos, password);
+    } catch(Exception e) {
+      e.printStackTrace();
+    } finally {
+        if (fos != null) {
+          try{
+            fos.close();
+          } catch(Exception e){
+            e.printStackTrace();
+          }
+        }
+    }
   }
  
   public byte[] encrypt(String plainText, byte[] encryptionKey, String iv) throws Exception {
@@ -60,10 +108,21 @@ public class AES {
     return new String(cipher.doFinal(cipherText),"UTF-8");
   }
 
-  // public static void main(String [] args) {
-  //   try {
-   //   AES aes = new AES();
-    //   encryptionKey = aes.generateSecretKey();
+  public static void main(String [] args) {
+    try {
+      AES aes = new AES();
+      Utils utils = new Utils();
+      byte[] secretKey = aes.secretKeyToByteArray(aes.generateSecretKey());
+      SecretKey secretKeyAlice = aes.generateSecretKey();
+      SecretKey secretKeyBob = aes.generateSecretKey();
+      aes.createKeyStore();
+      // String iv = "6caa81ea29dd0496";
+      String iv = utils.generateRandomIV();
+      System.out.println(iv);
+
+      String ptext = "Alice,REG,"+utils.generateRandomNonce()+","+utils.getTimeStamp();
+      System.out.println("plain:   " + ptext);
+      
 
     //   Utils utils = new Utils();
     //   GregorianCalendar cal = new GregorianCalendar();
@@ -99,9 +158,9 @@ public class AES {
     //   else
     //     System.out.println("FAILURE... D:");
  
-    // } catch (Exception e) {
-    //   e.printStackTrace();
-    // } 
-  // }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } 
+  }
 
 }
