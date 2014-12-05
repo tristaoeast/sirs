@@ -389,7 +389,7 @@ public class Client2
    		else {
    				localPort = Integer.parseInt(args[0]);
       			serverName = args[1];
-      			port = Integer.parseInt(args[3]);
+      			port = Integer.parseInt(args[2]);
       		}
 
 		try{
