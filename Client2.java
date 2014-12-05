@@ -18,16 +18,21 @@ public class Client2
 	private AES aes;
 	private Utils utils;
 	private ServerSocket serverSocket;
+	private String _serverName;
+	private int _serverPort;
  
-	public Client2(int port) throws IOException, SocketException{
+	public Client2(int localPort, String serverName, int serverPort) throws IOException, SocketException{
 
 		int[][][] _calendar = new int[13][32][24];
 		//_dh = new DiffieHellman();
 		noncesMap = new TreeMap<String, Long>();
 		aes = new AES();
 		utils = new Utils();
-		serverSocket = new ServerSocket(port);
+		_serverPort = serverPort;
+		_serverName = serverName;
+		serverSocket = new ServerSocket(localPort);
 		serverSocket.setSoTimeout(30000);
+
 	}
 
 	public boolean checkCalendarDate(int m, int d, int h){
@@ -374,23 +379,25 @@ public class Client2
 		char msg_char = ' ';
    		String serverName = "";
    		int port = 0;
+   		int localPort = 0;
    		String correctHash = "1000:aa78d57810a93e7378856693ecabf23fdd33325ec2778ab2:66d9c6667e6c48feb5c709ca0803de5db59ebdaeb29b9b64";
 
-   		if(args.length != 2) {
-   			System.err.println("Too few arguments. Run using Client1 [serverHostname] [serverPort]");
+   		if(args.length != 3) {
+   			System.err.println("Too few arguments. Run using Client1 [locaPort] [serverHostname] [serverPort]");
    			System.exit(-1);
    		}
    		else {
-      			serverName = args[0];
-      			port = Integer.parseInt(args[1]);
+   				localPort = Integer.parseInt(args[0]);
+      			serverName = args[1];
+      			port = Integer.parseInt(args[3]);
       		}
 
 		try{
-			Client2 client = new Client2(port);
+			Client2 client = new Client2(localPort, serverName, port);
 
-	      		authenticateUser(correctHash);
+	      	authenticateUser(correctHash);
 
-	      		System.out.println("What do you want to do?");
+	      	System.out.println("What do you want to do?");
 
 			String troll = getInput();
 

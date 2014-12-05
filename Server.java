@@ -10,7 +10,7 @@ public class Server extends Thread
    private ServerSocket serverSocket;
    private TreeMap privKeyFiles;
    private TreeMap publicKeyFiles;
-   private TreeMap<String, String> addressesMap;
+   private TreeMap<String, SocketAddress> addressesMap;
    private TreeMap<String, Long> noncesMap;
    private AES aes;
    private Utils utils;
@@ -19,7 +19,7 @@ public class Server extends Thread
    {
       serverSocket = new ServerSocket(port);
       serverSocket.setSoTimeout(30000);
-      addressesMap = new TreeMap<String, String>();
+      addressesMap = new TreeMap<String, SocketAddress>();
       //the nonce is the key, the timestamp in miliseconds is the value
       noncesMap = new TreeMap<String, Long>();
       aes = new AES();
@@ -121,7 +121,7 @@ public class Server extends Thread
                      if((validNonce(decMsg[2], utils.getTimeStamp())) 
                         && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(decMsg[3]))) {
                         //If we reach this point is because everything checks out, so the registration is successful
-                        addressesMap.put(outerMsg[0], remoteAddr.toString());
+                        addressesMap.put(outerMsg[0], remoteAddr);
                         noncesMap.put(decMsg[2], utils.getTimeStamp());
                         String serverNonce = utils.generateRandomNonce();
                         System.out.println(outerMsg[0]+" registered successfully with address " + remoteAddr);
@@ -141,11 +141,21 @@ public class Server extends Thread
                         && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(decMsg[decMsg.length-1]))) {
                         //If we reach this point is because everything checks out, so the server notifies the other user of the schedule request
                         String serverNonce = utils.generateRandomNonce();
-                        out.writeUTF(encryptAndComposeMsg("Server,REQ,"+outerMsg[0]+","+serverNonce+","+utils.getTimeStamp(), decMsg[decMsg.length-3]));
+                        
+                        String[] strsplit1 = addressesMap.get(decMsg[decMsg.length-3]).toString().split(":");
+                        String[] strsplit2 = strsplit1[0].split("/");
+                        int bobPort = Integer.parseInt(strsplit1[1]);
+                        String bobHostname = strsplit2[1];
+
+                        Socket bob = new Socket(bobHostname, bobPort);
+                        DataOutputStream outToBob = new DataOutputStream(bob.getOutputStream());
+                        DataInputStream inFromBob = new DataInputStream(bob.getInputStream());
+
+                        outToBob.writeUTF(encryptAndComposeMsg("Server,REQ,"+outerMsg[0]+","+serverNonce+","+utils.getTimeStamp(), decMsg[decMsg.length-3]));
                         System.out.println("Scheduling request from " + outerMsg[0] + " successfully sent to " + decMsg[decMsg.length-3]);
                         
                         // Now the server waits for the acceptance or rejection of the request for a meeting schedule and forwards the response to the requester
-                        String responseMsg = in.readUTF();
+                        String responseMsg = inFromBob.readUTF();
                         String[] rOuterMsg = responseMsg.split(":");
                         String[] rDecMsg = null;
                         if(rOuterMsg.length == 3){
@@ -156,6 +166,7 @@ public class Server extends Thread
                            System.out.println(errorMessage);
                            // out.writeUTF(encryptAndComposeMsg("Server,ERROR,"+errorMessage+","+utils.generateRandomNonce()+","+utils.getTimeStamp(),username));
                            server.close();
+                           bob.close();
                            continue;
                         }
 
@@ -166,7 +177,7 @@ public class Server extends Thread
                                  if((validNonce(rDecMsg[rDecMsg.length-2], utils.getTimeStamp())) 
                                     && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(rDecMsg[rDecMsg.length-1]))) {
                                     //If we reach this point is because everything checks out, so we forward the acceptance message
-                                    out.writeUTF(encryptAndComposeMsg("Server,ACCEPT,"+rOuterMsg[0]+","+utils.generateRandomNonce()+","+utils.getTimeStamp(), rDecMsg[rDecMsg.length-3]));
+                                    out.writeUTF(encryptAndComposeMsg("Server,ACCEPT,"+rOuterMsg[0]+","+bobHostname+","+bobPort+","+utils.generateRandomNonce()+","+utils.getTimeStamp(), rDecMsg[rDecMsg.length-3]));
                                     server.close();
                                     System.out.println("Forwarded successfully " + rOuterMsg[0]+ " acceptance of " + rDecMsg[rDecMsg.length-3] + " request to schedule a meeting");
                                     continue;
