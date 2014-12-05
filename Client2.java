@@ -79,6 +79,7 @@ public class Client2
 		String[] maux1 = msg.split(":");
 		String[] maux2 = null;
 		String[] parsedMsg = null;
+
 		if(maux1.length == 3){
 
 			if(maux1[0].equals("Server")){
@@ -90,14 +91,13 @@ public class Client2
 				String decryptedMsg = aes.decrypt(utils.stringToByteArray(maux1[1]), utils.stringToByteArray(_sharedKey.toString()), maux1[2]);
 				maux2 = decryptedMsg.split(",");
 			}
-
 		}
 		else{
 			wrongFormatMessage(socketClient, out);
 		}
-	
-		if(maux1[0].equals(maux2[0]) && (maux2.length > 1)){
 
+		if(maux1[0].equals(maux2[0]) && (maux2.length > 1)){
+			System.out.println(maux2[1]);
 			if(maux2[1].equals("CHECK")){
 
 				if(maux2.length == 5){
@@ -339,7 +339,7 @@ public class Client2
 			int bitLength = 1024; // 1024 bits
 			SecureRandom rnd = new SecureRandom();
 			String Nb = null;
-		
+			System.out.println("Generating DH public values");
 			parsedMsg = parseMessage(message, socketClient, out);
 
 			if(!(parsedMsg == null)){
@@ -353,6 +353,7 @@ public class Client2
 				out.writeUTF("Bob:" + utils.byteArrayToString(aes.encrypt(message, aes.readKeyFromFile("BobKeyStore"), iv)) + ":" + iv);
 			}
 			else{
+				System.out.println("banana");
 				socketClient.close();
 			}
 			message = in.readUTF();
@@ -510,6 +511,24 @@ public class Client2
 
 		}
 	}
+	
+	public String deparseMessage(String[] message){
+
+		int i;
+		String res = null;
+
+		for(i = 1; i < message.length-1; i++){
+
+			if(i == message.length-2){
+
+				res += message[i];
+			}
+			else{
+				res += message[i] + ":";
+			}
+		}
+		return res;
+	}
 
 	public static void main(String [] args){
 
@@ -538,7 +557,7 @@ public class Client2
 		
 			bob = new Client2(localPort, serverName, port);
 
-		    // authenticateUser(correctHash);
+		    //authenticateUser(correctHash);
 
 		     // String input = "";
 	      // 	while(!input.equals("y")){
@@ -554,12 +573,16 @@ public class Client2
 		      	response = getInput();
 		      	if(response.equals("y")){
 					DataOutputStream out = new DataOutputStream(server.getOutputStream());
+					DataInputStream in = new DataInputStream(server.getInputStream());
+					in.readUTF();
 					out.writeUTF(bob.encryptAndComposeMsg("Bob,ACCEPT,Alice,"+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()),"Bob"));
+
+				bob.createDHPublicValues(server, out, in);
 		      		break;
 		      	}
 	      	}
 
-			// bob.establishMeetingDate(server);
+			//bob.establishMeetingDate(server);
 		}
 		catch(SocketException s){
 			System.out.println("Socket timed out!");

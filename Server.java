@@ -97,6 +97,24 @@ public class Server extends Thread
       return "Server:" + utils.byteArrayToString(cipheredMsg) + ":" + iv;
    }
 
+	public String deparseMessage(String[] message){
+
+		int i;
+		String res = null;
+
+		for(i = 1; i < message.length-1; i++){
+
+			if(i == message.length-2){
+
+				res += message[i];
+			}
+			else{
+				res += message[i] + ":";
+			}
+		}
+		return res;
+	}
+
 
    public void run()
    {
@@ -151,7 +169,7 @@ public class Server extends Thread
                }
                else if(decMsg[1].equals("REQ")) { // Checks what action this message performs
                   if(decMsg.length == 5) { // Checks if the
-                     System.out.print(outerMsg[0] + " wishes to schedule a meeting with " + decMsg[decMsg.length-3]);
+                     System.out.println(outerMsg[0] + " wishes to schedule a meeting with " + decMsg[decMsg.length-3]);
                      if((validNonce(decMsg[decMsg.length-2], utils.getTimeStamp())) 
                         && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(decMsg[decMsg.length-1]))) {
                         //If we reach this point is because everything checks out, so the server notifies the other user of the schedule request
@@ -174,8 +192,9 @@ public class Server extends Thread
                         // Now the server waits for the acceptance or rejection of the request for a meeting schedule and forwards the response to the requester
                         String responseMsg = inFromBob.readUTF();
                         String[] rOuterMsg = responseMsg.split(":");
+			//System.out.println(rOuterMsg.length);
                         String[] rDecMsg = null;
-                        if(rOuterMsg.length == 3){
+                        if(rOuterMsg.length >= 3){
                            rDecMsg = decryptAndSplitMsg(rOuterMsg[1], rOuterMsg[2], rOuterMsg[0]);
                         }
                         else {

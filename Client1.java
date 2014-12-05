@@ -601,6 +601,24 @@ public class Client1
 
 	}
 
+	public String deparseMessage(String[] message){
+
+		int i;
+		String res = null;
+
+		for(i = 1; i < message.length-1; i++){
+
+			if(i == message.length-2){
+
+				res += message[i];
+			}
+			else{
+				res += message[i] + ":";
+			}
+		}
+		return res;
+	}
+
    public static void main(String [] args)
    {
 		Client1 alice = new Client1();
@@ -618,7 +636,7 @@ public class Client1
       	}
 
 
-      	// authenticateUser(correctHash);
+      	//authenticateUser(correctHash);
 
       	// String input = "";
       	// while(!input.equals("y")){
