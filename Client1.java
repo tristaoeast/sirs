@@ -408,13 +408,13 @@ public class Client1
 	private void registerWithServer(String serverName, int serverPort){
 		try{
 			Utils utils = new Utils();
-			Socket socketClient = new Socket(serverName, serverPort);
-			OutputStream outToServer = socketClient.getOutputStream();
-			DataOutputStream out = new DataOutputStream(outToServer);
-			while(out == null)
-				out = new DataOutputStream(outToServer);
+			// while(out == null)
+			// 	out = new DataOutputStream(outToServer);
 			String response = "";
-			while(!response.equals("ACKREG")){
+			loop: while(!response.equals("ACKREG")){
+					Socket socketClient = new Socket(serverName, serverPort);
+					OutputStream outToServer = socketClient.getOutputStream();
+					DataOutputStream out = new DataOutputStream(outToServer);
 					String testMsg = encryptAndComposeMsg("Alice,REG,"+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()),"Alice");
 					// System.out.println(testMsg); 
 					out.writeUTF(testMsg);
@@ -438,7 +438,7 @@ public class Client1
 		               if(decMsg[1].equals("ACKREG")) {
 		               	  System.out.println("Registered with server with success!");
 		                  socketClient.close();
-		                  break;
+		                  break loop;
 		               } else {
 		               	socketClient.close();
 		               	continue;
@@ -463,7 +463,74 @@ public class Client1
 		}
 	}
 
-	private void requestMeeting(String serverName, int serverPort){
+	private boolean requestMeeting(String serverName, int serverPort){
+		try{
+			Utils utils = new Utils();
+		
+			Socket socketClient = new Socket(serverName, serverPort);
+			OutputStream outToServer = socketClient.getOutputStream();
+			DataOutputStream out = new DataOutputStream(outToServer);
+			String testMsg = encryptAndComposeMsg("Alice,REQ,Bob,"+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()),"Alice");
+			// System.out.println(testMsg); 
+			out.writeUTF(testMsg);
+			System.out.println("Sent meeting scheduling request to server. Awaiting response...");
+			InputStream inFromServer = socketClient.getInputStream();
+			DataInputStream in = new DataInputStream(inFromServer);
+			String inMsg = in.readUTF();
+		    String[] outerMsg = inMsg.split(":");
+		    String[] decMsg = null;
+		    if(outerMsg.length == 3){
+		    	decMsg = decryptAndSplitMsg(outerMsg[1], outerMsg[2], "Alice");
+		    }
+		    else {
+		        String errorMessage = "ERROR: Message with wrong format received. Aborting current connection...";
+		        System.out.println(errorMessage);
+		        socketClient.close();
+		        return false;
+		    }
+		    if(outerMsg[0].equals(decMsg[0]) && (decMsg.length > 1)) { // Checks if it is the actual user
+		        if(decMsg[1].equals("ACCEPT")) {
+		        	if((validNonce(decMsg[decMsg.length-2], utils.getTimeStamp())) 
+                        && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(decMsg[decMsg.length-1]))){
+			       		System.out.println("Meeting scheduling accepted by Bob");
+			        	socketClient.close();
+			        	return true;
+			        }
+		        	
+	            } else if(decMsg[1].equals("REJECT")) {
+		        	if((validNonce(decMsg[decMsg.length-2], utils.getTimeStamp())) 
+                        && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(decMsg[decMsg.length-1]))){
+			       		System.out.println("Meeting scheduling rejected by Bob");
+						socketClient.close();
+						return false;
+			    	}
+			    }else{
+			    	System.out.printf("Wrong message format");
+			    	return false;
+			    }
+			}
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+		return false;
+		// 			}
+			
+		// } catch (FileNotFoundException e){e.printStackTrace();
+		// } catch (UnknownHostException e){e.printStackTrace();
+		// } catch (IOException e){e.printStackTrace();
+		// } catch (NoSuchAlgorithmException e){e.printStackTrace();
+		// } catch (NoSuchProviderException e){e.printStackTrace();
+		// } catch (IllegalBlockSizeException e){e.printStackTrace();
+		// } catch (InvalidKeyException e){e.printStackTrace();
+		// } catch (NoSuchPaddingException e){e.printStackTrace();
+		// } catch (InvalidAlgorithmParameterException e){e.printStackTrace();
+		// } catch (BadPaddingException e){e.printStackTrace();
+		// // } catch (IllegalBlockSizeException e){e.printStackTrace();
+		// // } catch (IllegalBlockSizeException e){e.printStackTrace();
+		// // } catch (IllegalBlockSizeException e){e.printStackTrace();
+
+
+		// }
 
 	}
 
@@ -494,7 +561,7 @@ public class Client1
       	alice.registerWithServer(serverName, port);
 
       	boolean repeat = true;
-    input: 	while(repeat){
+    input1: while(repeat){
 	      	System.out.println("What do you want to do?");
 	      	System.out.println("[1] Schedule a meeting");
 	      	// System.out.println("");
@@ -505,47 +572,47 @@ public class Client1
 		      		System.exit(0);
 		      	if(opt == 1){
 		      		boolean repeat1 = true;
-		      		while(repeat1){
+		      		input2: while(repeat1){
 			      		System.out.println("Who do you want to schedule a meeting with?");
 			      		System.out.println("[1] Bob");
 			      		opt = Integer.parseInt(getInput());
 			      		if(opt == 1){
-			      			alice.requestMeeting(serverName, port);
+			      			if(alice.requestMeeting(serverName, port)){
+
+			      			}
+			      			
 			      		}
-			      		else break;
+			      		else continue input2;
 		      		}
 		      	} else break;
 	      	} catch(Exception e){
 	      		System.out.println("Input must be a number");
-	      		continue input;
+	      		continue input1;
 	      	}
       	}
 
-	try{
-		Socket socketClient = new Socket(serverName, port);
-		OutputStream outToServer = socketClient.getOutputStream();
-		DataOutputStream out = new DataOutputStream(outToServer);
-		InputStream inFromServer = socketClient.getInputStream();
-		DataInputStream in = new DataInputStream(inFromServer);
+	// try{
+	// 	Socket socketClient = new Socket(serverName, port);
+	// 	OutputStream outToServer = socketClient.getOutputStream();
+	// 	DataOutputStream out = new DataOutputStream(outToServer);
+	// 	InputStream inFromServer = socketClient.getInputStream();
+	// 	DataInputStream in = new DataInputStream(inFromServer);
 
-		alice.createDHPublicValues(socketClient, out, in);
-		alice.findCommonDate(socketClient, out, in);
+	// 	alice.createDHPublicValues(socketClient, out, in);
+	// 	alice.findCommonDate(socketClient, out, in);
 
 
-		/* System.out.println("Connecting to " + serverName + " on port " + port);
-		 //Establish socket connection with server
-		 Socket socketClient = new Socket(serverName, port);
-		 System.out.println("Just connected to " + client.getRemoteSocketAddress());
-		 OutputStream outToServer = client.getOutputStream();
-		 DataOutputStream out = new DataOutputStream(outToServer);
-		 out.writeUTF("Hello from " + client.getLocalSocketAddress());
-		 InputStream inFromServer = client.getInputStream();
-		 DataInputStream in = new DataInputStream(inFromServer);
-		 System.out.println("Server says " + in.readUTF());*/
-		 socketClient.close();
-	}
-	catch(IOException e){
-		e.printStackTrace();
-	}
+		 // System.out.println("Connecting to " + serverName + " on port " + port);
+		 // //Establish socket connection with server
+		 // Socket socketClient = new Socket(serverName, port);
+		 // System.out.println("Just connected to " + client.getRemoteSocketAddress());
+		 // OutputStream outToServer = client.getOutputStream();
+		 // DataOutputStream out = new DataOutputStream(outToServer);
+		 // out.writeUTF("Hello from " + client.getLocalSocketAddress());
+		 // InputStream inFromServer = client.getInputStream();
+		 // DataInputStream in = new DataInputStream(inFromServer);
+		 // System.out.println("Server says " + in.readUTF());
+		 // socketClient.close();
+	
    }
 }

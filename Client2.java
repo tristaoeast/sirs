@@ -7,6 +7,8 @@ import java.security.spec.InvalidKeySpecException;
 //import oracle.security.crypto.core.*;
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import javax.crypto.*;
+import java.security.*;
 
 public class Client2
 {
@@ -268,6 +270,25 @@ public class Client2
 		socketClient.close();
 	}
 
+	public String encryptAndComposeMsg(String plaintext, String username) throws IllegalBlockSizeException,InvalidKeyException,NoSuchPaddingException,InvalidAlgorithmParameterException,BadPaddingException,NoSuchProviderException,FileNotFoundException,UnsupportedEncodingException,NoSuchAlgorithmException,IOException
+   	{
+   		AES aes = new AES();
+   		Utils utils = new Utils();
+      String iv = utils.generateRandomIV();
+      // System.out.println("ENTREI!!");
+      byte[] cipheredMsg = aes.encrypt(plaintext, aes.readKeyFromFile(username + "KeyStore"), iv);
+      return "Alice:" + utils.byteArrayToString(cipheredMsg) + ":" + iv;
+   	}
+
+   	public String[] decryptAndSplitMsg(String cipheredMsg, String iv, String username) throws IllegalBlockSizeException,InvalidKeyException,NoSuchAlgorithmException,NoSuchPaddingException,InvalidAlgorithmParameterException,BadPaddingException,IOException,FileNotFoundException,UnsupportedEncodingException
+   	{
+   		AES aes = new AES();
+   		Utils utils = new Utils();
+      String decipheredText = aes.decrypt(utils.stringToByteArray(cipheredMsg), aes.readKeyFromFile(username + "KeyStore"), iv);
+      String[] decMsg = decipheredText.split(",");
+      return decMsg;
+   	}
+
 	public void createDHPublicValues(Socket socketClient, DataOutputStream out, DataInputStream in){
 
 		try{
@@ -372,10 +393,68 @@ public class Client2
 
 	public Socket waitConnection() throws IOException{
 
-		System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
-		Socket server = serverSocket.accept();	
+		System.out.println("Waiting for connection on port " + serverSocket.getLocalPort() + "...");
+		Socket server = serverSocket.accept();
 
 		return server;
+	}
+
+	private void registerWithServer(String serverName, int serverPort){
+		try{
+			Utils utils = new Utils();
+			// while(out == null)
+			// 	out = new DataOutputStream(outToServer);
+			String response = "";
+			loop: while(!response.equals("ACKREG")){
+					Socket socketClient = new Socket(serverName, serverPort);
+					OutputStream outToServer = socketClient.getOutputStream();
+					DataOutputStream out = new DataOutputStream(outToServer);
+					String testMsg = encryptAndComposeMsg("Alice,REG,"+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()),"Alice");
+					// System.out.println(testMsg); 
+					out.writeUTF(testMsg);
+					System.out.println("Sent registration to server. Awaiting response...");
+					InputStream inFromServer = socketClient.getInputStream();
+					DataInputStream in = new DataInputStream(inFromServer);
+					String inMsg = in.readUTF();
+		            String[] outerMsg = inMsg.split(":");
+		            String[] decMsg = null;
+		            if(outerMsg.length == 3){
+		               decMsg = decryptAndSplitMsg(outerMsg[1], outerMsg[2], "Alice");
+		            }
+		            else {
+		               String errorMessage = "ERROR: Message with wrong format received. Aborting current connection...";
+		               System.out.println(errorMessage);
+		               socketClient.close();
+		               continue;
+		            }
+		            if(outerMsg[0].equals(decMsg[0]) && (decMsg.length > 1)) { // Checks if it is the actual user
+		               
+		               if(decMsg[1].equals("ACKREG")) {
+		               	  System.out.println("Registered with server with success!");
+		                  socketClient.close();
+		                  break loop;
+		               } else {
+		               	socketClient.close();
+		               	continue;
+		               }
+					}
+			}
+		} catch (FileNotFoundException e){e.printStackTrace();
+		} catch (UnknownHostException e){e.printStackTrace();
+		} catch (IOException e){e.printStackTrace();
+		} catch (NoSuchAlgorithmException e){e.printStackTrace();
+		} catch (NoSuchProviderException e){e.printStackTrace();
+		} catch (IllegalBlockSizeException e){e.printStackTrace();
+		} catch (InvalidKeyException e){e.printStackTrace();
+		} catch (NoSuchPaddingException e){e.printStackTrace();
+		} catch (InvalidAlgorithmParameterException e){e.printStackTrace();
+		} catch (BadPaddingException e){e.printStackTrace();
+		// } catch (IllegalBlockSizeException e){e.printStackTrace();
+		// } catch (IllegalBlockSizeException e){e.printStackTrace();
+		// } catch (IllegalBlockSizeException e){e.printStackTrace();
+
+
+		}
 	}
 
 	public static void main(String [] args){
@@ -397,18 +476,26 @@ public class Client2
       			port = Integer.parseInt(args[2]);
       		}
 
+
+
 		try{
-			Client2 client = new Client2(localPort, serverName, port);
+		
+		Client2 bob = new Client2(localPort, serverName, port);
 
-	      	authenticateUser(correctHash);
+	      	// authenticateUser(correctHash);
 
-	      	System.out.println("What do you want to do?");
+	      String input = "";
+      	while(!input.equals("y")){
+      		System.out.println("Register with server? [y/n]");
+      		input = getInput();
+      	}
+      	bob.registerWithServer(serverName, port);
+      	Socket server = bob.waitConnection();
 
-			String troll = getInput();
+      	System.out.println("Meeting scheduling request received from Alice. Do you want to accept it? [y/n]");
+      	getInput();
 
-			Socket server = client.waitConnection();
-
-			client.establishMeetingDate(server);
+			bob.establishMeetingDate(server);
 		}
 		catch(SocketException s){
 			System.out.println("Socket timed out!");
