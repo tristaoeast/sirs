@@ -107,7 +107,10 @@ public class Server extends Thread
                decMsg = decryptAndSplitMsg(outerMsg[1], outerMsg[2], outerMsg[0]);
             }
             else {
-               wrongFormatMessage(server, out, outerMsg[0]);
+               String errorMessage = "ERROR: Message with wrong format received. Aborting current connection...";
+               System.out.println(errorMessage);
+               // out.writeUTF(encryptAndComposeMsg("Server,ERROR,"+errorMessage+","+utils.generateRandomNonce()+","+utils.getTimeStamp(),username));
+               server.close();
                continue;
             }
             if(outerMsg[0].equals(decMsg[0]) && (decMsg.length > 1)) { // Checks if it is the actual user
@@ -127,49 +130,80 @@ public class Server extends Thread
                         continue;
                         
                      }
-                     else {
-                        expiredMessage(server, out, outerMsg[0]);
-                        continue;   
-                     }
+                     else {expiredMessage(server, out, outerMsg[0]);continue;}
                   }
-                  else {
-                     wrongFormatMessage(server, out, outerMsg[0]);
-                     continue;
-                  }
+                  else {wrongFormatMessage(server, out, outerMsg[0]);continue;}
                }
                else if(decMsg[1].equals("REQ")) { // Checks what action this message performs
                   if(decMsg.length == 5) { // Checks if the
-                     System.out.print(outerMsg[0] + " wishes to schedule a meeting with " + decMsg[2]);
-                     if((validNonce(decMsg[3], utils.getTimeStamp())) 
-                        && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(decMsg[4]))) {
+                     System.out.print(outerMsg[0] + " wishes to schedule a meeting with " + decMsg[decMsg.length-3]);
+                     if((validNonce(decMsg[decMsg.length-2], utils.getTimeStamp())) 
+                        && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(decMsg[decMsg.length-1]))) {
                         //If we reach this point is because everything checks out, so the server notifies the other user of the schedule request
                         String serverNonce = utils.generateRandomNonce();
-                        out.writeUTF(encryptAndComposeMsg("Server,REQ,"+outerMsg[0]+","+serverNonce+","+utils.getTimeStamp(), decMsg[2]));
-                        server.close();
-                        System.out.println("Scheduling request from " + outerMsg[0] + " successfully sent to " + decMsg[2]);
+                        out.writeUTF(encryptAndComposeMsg("Server,REQ,"+outerMsg[0]+","+serverNonce+","+utils.getTimeStamp(), decMsg[decMsg.length-3]));
+                        System.out.println("Scheduling request from " + outerMsg[0] + " successfully sent to " + decMsg[decMsg.length-3]);
                         
+                        // Now the server waits for the acceptance or rejection of the request for a meeting schedule and forwards the response to the requester
                         String responseMsg = in.readUTF();
+                        String[] rOuterMsg = responseMsg.split(":");
+                        String[] rDecMsg = null;
+                        if(rOuterMsg.length == 3){
+                           rDecMsg = decryptAndSplitMsg(rOuterMsg[1], rOuterMsg[2], rOuterMsg[0]);
+                        }
+                        else {
+                           String errorMessage = "ERROR: Message with wrong format received. Aborting current connection...";
+                           System.out.println(errorMessage);
+                           // out.writeUTF(encryptAndComposeMsg("Server,ERROR,"+errorMessage+","+utils.generateRandomNonce()+","+utils.getTimeStamp(),username));
+                           server.close();
+                           continue;
+                        }
 
-
-                        continue;
-                        
+                        if(rOuterMsg[0].equals(rDecMsg[0]) && (rDecMsg.length > 1)) { // Checks if it is the actual user
+                           if(rDecMsg[1].equals("ACCEPT")) { // Checks what action this message performs
+                              if(rDecMsg.length == 5) { // Checks if the  
+                                 System.out.println(rOuterMsg[0] + " accepted the request to schedule a meeting from " + rDecMsg[rDecMsg.length-3]);
+                                 if((validNonce(rDecMsg[rDecMsg.length-2], utils.getTimeStamp())) 
+                                    && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(rDecMsg[rDecMsg.length-1]))) {
+                                    //If we reach this point is because everything checks out, so we forward the acceptance message
+                                    out.writeUTF(encryptAndComposeMsg("Server,ACCEPT,"+rOuterMsg[0]+","+utils.generateRandomNonce()+","+utils.getTimeStamp(), rDecMsg[rDecMsg.length-3]));
+                                    server.close();
+                                    System.out.println("Forwarded successfully " + rOuterMsg[0]+ " acceptance of " + rDecMsg[rDecMsg.length-3] + " request to schedule a meeting");
+                                    continue;
+                                 }
+                                 else {expiredMessage(server, out, rOuterMsg[0]);continue;}
+                              }
+                              else {wrongFormatMessage(server, out, rOuterMsg[0]);continue;}
+                           }
+                           else if(rDecMsg[1].equals("REJECT")) { // Checks what action this message performs
+                              if(rDecMsg.length == 5) { // Checks if the  
+                                 System.out.println(rOuterMsg[0] + " rejected the request to schedule a meeting from " + rDecMsg[rDecMsg.length-3]);
+                                 if((validNonce(rDecMsg[rDecMsg.length-2], utils.getTimeStamp())) 
+                                    && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(rDecMsg[rDecMsg.length-1]))) {
+                                    //If we reach this point is because everything checks out, so we forward the acceptance message
+                                    out.writeUTF(encryptAndComposeMsg("Server,REJECT,"+rOuterMsg[0]+","+utils.generateRandomNonce()+","+utils.getTimeStamp(), rDecMsg[rDecMsg.length-3]));
+                                    server.close();
+                                    System.out.println("Forwarded successfully " + rOuterMsg[0]+ " rejection of " + rDecMsg[rDecMsg.length-3] + " request to schedule a meeting");
+                                    continue;
+                                 }
+                                 else {expiredMessage(server, out, rOuterMsg[0]);continue;}
+                              }
+                              else {wrongFormatMessage(server, out, rOuterMsg[0]);continue;}
+                           }
+                           else {wrongFormatMessage(server, out, rOuterMsg[0]);continue;}
+                        }
+                        else {wrongCredentialsProvided(server, out, rOuterMsg[0]);continue;}
                      }
-                     else {
-                        expiredMessage(server, out, outerMsg[0]);
-                        continue;   
-                     }
+                     else {expiredMessage(server, out, outerMsg[0]);continue;}
                   }
-                  else {
-                     wrongFormatMessage(server, out, outerMsg[0]);
-                     continue;
-                  }
+                  else {wrongFormatMessage(server, out, outerMsg[0]);continue;}
                }
 
                else if(decMsg[1].equals("ERROR") && (decMsg.length==3)) { // If an error message is received from the client
                   //TODO
-                  // System.out.println("Client says: " + decMsg[2]);
-                  // server.close();
-                  // continue;
+                  System.out.println("Client says: " + decMsg[2]);
+                  server.close();
+                  continue;
                }
 
             }
