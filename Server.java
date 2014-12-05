@@ -19,7 +19,7 @@ public class Server extends Thread
    public Server(int port) throws IOException
    {
       serverSocket = new ServerSocket(port);
-      serverSocket.setSoTimeout(300000);
+      serverSocket.setSoTimeout(30000);
       addressesMap = new TreeMap<String, SocketAddress>();
       //the nonce is the key, the timestamp in miliseconds is the value
       noncesMap = new TreeMap<String, Long>();
@@ -103,6 +103,7 @@ public class Server extends Thread
          try
          {
             Utils utils = new Utils();
+            AES aes = new AES();
             System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
             Socket server = serverSocket.accept();
             // SocketAddress structure: hostname/ip:port
@@ -191,10 +192,12 @@ public class Server extends Thread
                                     && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(rDecMsg[rDecMsg.length-1]))) {
                                     //If we reach this point is because everything checks out, so we forward the acceptance message
                                     out.writeUTF(encryptAndComposeMsg("Server,ACCEPT,"+rOuterMsg[0]+","+bobHostname+","+String.valueOf(portsMap.get("Bob"))+","+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()), rDecMsg[rDecMsg.length-3]));
+                                    // byte[] sharedKey = aes.secretKeyToByteArray
+                                    // out.writeUTF
                                     server.close();
                                     bob.close();
                                     System.out.println("Forwarded successfully " + rOuterMsg[0]+ " acceptance of " + rDecMsg[rDecMsg.length-3] + " request to schedule a meeting");
-                                    
+
                                     continue;
                                  }
                                  else {expiredMessage(server, out, rOuterMsg[0]);continue;}

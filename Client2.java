@@ -31,7 +31,7 @@ public class Client2
 		aes = new AES();
 		utils = new Utils();
 		serverSocket = new ServerSocket(localPort);
-		serverSocket.setSoTimeout(300000);
+		serverSocket.setSoTimeout(30000);
 
 	}
 
