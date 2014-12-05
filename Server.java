@@ -2,6 +2,8 @@ import java.net.*;
 import java.io.*;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 
@@ -115,6 +117,7 @@ public class Server extends Thread
             String inMsg = in.readUTF();
             String[] outerMsg = inMsg.split(":");
             String[] decMsg = null;
+
             if(outerMsg.length == 3){
                decMsg = decryptAndSplitMsg(outerMsg[1], outerMsg[2], outerMsg[0]);
             }
@@ -194,10 +197,55 @@ public class Server extends Thread
                                     out.writeUTF(encryptAndComposeMsg("Server,ACCEPT,"+rOuterMsg[0]+","+bobHostname+","+String.valueOf(portsMap.get("Bob"))+","+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()), rDecMsg[rDecMsg.length-3]));
                                     // byte[] sharedKey = aes.secretKeyToByteArray
                                     // out.writeUTF
-                                    server.close();
-                                    bob.close();
+                                    //server.close();
+                                    //bob.close();
                                     System.out.println("Forwarded successfully " + rOuterMsg[0]+ " acceptance of " + rDecMsg[rDecMsg.length-3] + " request to schedule a meeting");
 
+				    int bitLength = 1024; // 1024 bits
+    				    SecureRandom rnd = new SecureRandom();
+                                    BigInteger p = BigInteger.probablePrime(bitLength, rnd);
+                                    BigInteger g = BigInteger.probablePrime(bitLength, rnd);
+
+				    out.writeUTF(encryptAndComposeMsg("Server,DH,Bob," + p.toString() + "," + g.toString() + ","+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()), "Alice"));
+				    outToBob.writeUTF(encryptAndComposeMsg("Server,DH,Alice," + p.toString() + "," + g.toString() + ","+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()), "Bob"));
+
+				    String aInMsg = in.readUTF();
+				    String bInMsg = inFromBob.readUTF();
+                                    String[] aOuterMsg = aInMsg.split(":");
+                                    String[] bOuterMsg = bInMsg.split(":");
+                                    String[] aDecMsg = null, bDecMsg = null;
+				    
+			            if(aOuterMsg.length == 3 && bOuterMsg.length == 3){
+			               aDecMsg = decryptAndSplitMsg(aOuterMsg[1], aOuterMsg[2], aOuterMsg[0]);
+			               bDecMsg = decryptAndSplitMsg(bOuterMsg[1], bOuterMsg[2], bOuterMsg[0]);
+			            }
+                                    else {
+                                       String errorMessage = "ERROR: Message with wrong format received. Aborting current connection...";
+                                       System.out.println(errorMessage);
+                                       server.close();
+                                       bob.close();
+                                       continue;
+                                    }
+                                    if((aOuterMsg[0].equals(aDecMsg[0]) && (aDecMsg.length > 1)) && (bOuterMsg[0].equals(bDecMsg[0]) && (bDecMsg.length > 1))) {
+
+					if(aDecMsg[1].equals("DH") && bDecMsg[1].equals("DH")) {
+
+						if(aDecMsg.length == 6 && bDecMsg.length == 6) {
+							System.out.println(aOuterMsg[0] + " sent DH response " + aDecMsg[aDecMsg.length-3] + " and " + aOuterMsg[0] + " sent DH response " + bDecMsg[bDecMsg.length-3]);
+							if(((validNonce(aDecMsg[aDecMsg.length-2], utils.getTimeStamp())) 
+                                    && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(aDecMsg[aDecMsg.length-1]))) 
+				    && ((validNonce(bDecMsg[bDecMsg.length-2], utils.getTimeStamp())) && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(bDecMsg[bDecMsg.length-1])))) {
+
+								out.writeUTF(encryptAndComposeMsg("Server,DH,Bob," + bDecMsg[bDecMsg.length-3] + ","+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()), "Alice"));
+				    				outToBob.writeUTF(encryptAndComposeMsg("Server,DH,Alice," + aDecMsg[aDecMsg.length-3] + ","+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()), "Bob"));
+							}
+							else {expiredMessage(server, out, aOuterMsg[0]);expiredMessage(server, out, bOuterMsg[0]);continue;}
+						}
+						else {wrongFormatMessage(server, out, aOuterMsg[0]);wrongFormatMessage(server, out, bOuterMsg[0]);continue;}
+					}
+					else {wrongFormatMessage(server, out, aOuterMsg[0]);wrongFormatMessage(server, out, bOuterMsg[0]);continue;}
+				    }
+				    else {wrongFormatMessage(server, out, aOuterMsg[0]);wrongFormatMessage(server, out, bOuterMsg[0]);continue;}
                                     continue;
                                  }
                                  else {expiredMessage(server, out, rOuterMsg[0]);continue;}
@@ -228,7 +276,6 @@ public class Server extends Thread
                   }
                   else {wrongFormatMessage(server, out, outerMsg[0]);continue;}
                }
-
                else if(decMsg[1].equals("ERROR") && (decMsg.length==5)) { // If an error message is received from the client
                   if((validNonce(decMsg[decMsg.length-2], utils.getTimeStamp())) 
                      && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(decMsg[decMsg.length-1]))){

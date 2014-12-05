@@ -2,6 +2,7 @@ import java.net.*;
 import java.io.*;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.Random;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 //import oracle.security.crypto.core.*;
@@ -32,6 +33,31 @@ public class Client2
 		utils = new Utils();
 		serverSocket = new ServerSocket(localPort);
 		serverSocket.setSoTimeout(30000);
+
+		for(int i = 1; i < 13; i++){
+
+			Random generator = new Random();
+
+			for(int j = 1; j < 32; j++){
+
+				for(int k = 0; k < 24; k++){
+
+					if((k/10) < 1){
+						
+						_calendar[i][j][k] = 1;
+					}
+					else{
+						boolean res = generator.nextBoolean();
+						if(res){
+							_calendar[i][j][k] = 0;
+						}
+						else{
+							_calendar[i][j][k] = 1;
+						}
+					}
+				}
+			}
+		}
 
 	}
 
