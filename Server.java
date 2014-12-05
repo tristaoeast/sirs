@@ -19,7 +19,7 @@ public class Server extends Thread
    public Server(int port) throws IOException
    {
       serverSocket = new ServerSocket(port);
-      serverSocket.setSoTimeout(30000);
+      serverSocket.setSoTimeout(300000);
       addressesMap = new TreeMap<String, SocketAddress>();
       //the nonce is the key, the timestamp in miliseconds is the value
       noncesMap = new TreeMap<String, Long>();
@@ -153,10 +153,12 @@ public class Server extends Thread
                         //If we reach this point is because everything checks out, so the server notifies the other user of the schedule request
                         String serverNonce = utils.generateRandomNonce();
                         
-                        String[] strsplit1 = addressesMap.get(decMsg[decMsg.length-3]).toString().split(":");
-                        String[] strsplit2 = strsplit1[0].split("/");
-                        int bobPort = Integer.parseInt(strsplit1[1]);
-                        String bobHostname = strsplit2[1];
+                        // String[] strsplit1 = addressesMap.get(decMsg[decMsg.length-3]).toString().split(":");
+                        // String[] strsplit2 = strsplit1[0].split("/");
+                        // int bobPort = Integer.parseInt(strsplit1[1]);
+                        // String bobHostname = strsplit2[1];
+                        String bobHostname = "127.0.0.1";
+                        int bobPort = 8081;
 
                         Socket bob = new Socket(bobHostname, bobPort);
                         DataOutputStream outToBob = new DataOutputStream(bob.getOutputStream());
@@ -192,6 +194,7 @@ public class Server extends Thread
                                     server.close();
                                     bob.close();
                                     System.out.println("Forwarded successfully " + rOuterMsg[0]+ " acceptance of " + rDecMsg[rDecMsg.length-3] + " request to schedule a meeting");
+                                    
                                     continue;
                                  }
                                  else {expiredMessage(server, out, rOuterMsg[0]);continue;}

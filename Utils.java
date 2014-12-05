@@ -39,7 +39,7 @@ public class Utils
         //Always use a SecureRandom generator
         SecureRandom sr = SecureRandom.getInstance("SHA1PRNG");
         //Create array for nonce
-        byte[] nonce = new byte[NONCE_BYTE_SIZE];
+        byte[] nonce = new byte[8];
         //Get a random nonce
         sr.nextBytes(nonce);
         //return nonce
@@ -51,7 +51,7 @@ public class Utils
         //Always use a SecureRandom generator
         SecureRandom sr = SecureRandom.getInstance("SHA1PRNG");
         //Create array for nonce
-        byte[] iv = new byte[IV_BYTE_SIZE];
+        byte[] iv = new byte[8];
         //Get a random iv
         sr.nextBytes(iv);
         //return iv
