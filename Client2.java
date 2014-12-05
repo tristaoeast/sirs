@@ -198,30 +198,36 @@ public class Client2
 
 				message = in.readUTF();
 				parsedMsg = parseMessage(message, server, out);
-				//System.out.println("Client1 says " + message);
 
-				int month = 0, day = 0, hour = 0;
-				String[] split1 = parsedMsg[3].split("-");
-				String[] split2 = split1[0].split("/");
+				if(!(parsedMsg == null)){
+					//System.out.println("Client1 says " + message);
 
-				day = Integer.parseInt(split2[0]);
-				month = Integer.parseInt(split2[1]);
-				hour = Integer.parseInt(split1[1]);
+					int month = 0, day = 0, hour = 0;
+					String[] split1 = parsedMsg[3].split("-");
+					String[] split2 = split1[0].split("/");
 
-				if(!parsedMsg[3].equals("ack:yes")){
-					if(!checkCalendarDate(month, day, hour)){
+					day = Integer.parseInt(split2[0]);
+					month = Integer.parseInt(split2[1]);
+					hour = Integer.parseInt(split1[1]);
 
-						String msg = "Bob,CHECK,No," + utils.generateRandomNonce()+"," + String.valueOf(System.currentTimeMillis());
-						String iv = utils.generateRandomIV();
-						out.writeUTF("Bob:" + utils.byteArrayToString(aes.encrypt(msg, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
+					if(!parsedMsg[3].equals("ack:yes")){
+						if(!checkCalendarDate(month, day, hour)){
+
+							String msg = "Bob,CHECK,No," + utils.generateRandomNonce()+"," + String.valueOf(System.currentTimeMillis());
+							String iv = utils.generateRandomIV();
+							out.writeUTF("Bob:" + utils.byteArrayToString(aes.encrypt(msg, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
+						}
+						else {
+							String msg = "Bob,CHECK,Yes," + utils.generateRandomNonce()+"," + String.valueOf(System.currentTimeMillis());
+							String iv = utils.generateRandomIV();
+							out.writeUTF("Bob:" + utils.byteArrayToString(aes.encrypt(msg, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
+						}
 					}
-					else {
-						String msg = "Bob,CHECK,Yes," + utils.generateRandomNonce()+"," + String.valueOf(System.currentTimeMillis());
-						String iv = utils.generateRandomIV();
-						out.writeUTF("Bob:" + utils.byteArrayToString(aes.encrypt(msg, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
-					}
+					else{ break;}
 				}
-				else{ break;}
+				else{
+					server.close();
+				}
 			}
 			server.close();
 		}

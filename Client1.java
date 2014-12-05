@@ -208,7 +208,13 @@ public class Client1
 						}
 						message = in.readUTF();
 						parsedMsg = parseMessage(message, socketClient, out);
-						if(parsedMsg[3].equals("Yes")){ break;}
+						if(!(parsedMsg == null)){
+
+							if(parsedMsg[3].equals("Yes")){ break;}
+						}
+						else{
+							socketClient.close();
+						}						
 					}
 					if(parsedMsg[3].equals("Yes")){ break;}
 					lastCheckedDay++;
@@ -234,7 +240,13 @@ public class Client1
 						}
 						message = in.readUTF();
 						parsedMsg = parseMessage(message, socketClient, out);
-						if(parsedMsg[3].equals("Yes")){ break;}
+						if(!(parsedMsg == null)){
+
+							if(parsedMsg[3].equals("Yes")){ break;}
+						}
+						else{
+							socketClient.close();
+						}
 					}
 					if(parsedMsg[3].equals("Yes")){ break;}
 					lastCheckedDay++;
