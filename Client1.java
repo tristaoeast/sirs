@@ -375,9 +375,13 @@ public class Client1
     	return s;
 	}
 
+	private void registerWithServer(String serverName, int serverPort){
+
+	}
+
    public static void main(String [] args)
    {
-		Client1 client = new Client1();
+		Client1 alice = new Client1();
    		String serverName = "";
    		int port = 0;
    		String correctHash = "1000:4ef06e4a486a7f279ee1fb67b9f66ff1ad0c1fc1da22e8f7:1cb66a2517552374390797c200ff32205a457184e4ba4cf5";
@@ -391,9 +395,43 @@ public class Client1
       		port = Integer.parseInt(args[1]);
       	}
 
-      	authenticateUser(correctHash);
 
-      	System.out.println("What do you want to do?");
+      	// authenticateUser(correctHash);
+
+      	String input = "";
+      	while(!input.equals("y")){
+      		System.out.println("Register with server? [y/n]");
+      		input = getInput();
+      	}
+      	alice.registerWithServer(serverName, port);
+
+      	boolean repeat = true;
+    input: 	while(repeat){
+	      	System.out.println("What do you want to do?");
+	      	System.out.println("[1] Schedule a meeting");
+	      	// System.out.println("");
+	      	System.out.println("[0] Exit");
+	      	try{
+		      	int opt = Integer.parseInt(getInput());
+		      	if(opt == 0)
+		      		System.exit(0);
+		      	if(opt == 1){
+		      		boolean repeat1 = true;
+		      		while(repeat1){
+			      		System.out.println("Who do you want to connect to?");
+			      		System.out.println("[1] Bob");
+			      		opt = Integer.parseInt(getInput());
+			      		if(opt == 1){
+			      		
+			      		}
+			      		else break;
+		      		}
+		      	} else break;
+	      	} catch(Exception e){
+	      		System.out.println("Input must be a number");
+	      		continue input;
+	      	}
+      	}
 
 	try{
 		Socket socketClient = new Socket(serverName, port);
@@ -402,8 +440,8 @@ public class Client1
 		InputStream inFromServer = socketClient.getInputStream();
 		DataInputStream in = new DataInputStream(inFromServer);
 
-		client.createDHPublicValues(socketClient, out, in);
-		client.findCommonDate(socketClient, out, in);
+		alice.createDHPublicValues(socketClient, out, in);
+		alice.findCommonDate(socketClient, out, in);
 
 
 		/* System.out.println("Connecting to " + serverName + " on port " + port);
