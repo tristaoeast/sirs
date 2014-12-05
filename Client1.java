@@ -636,7 +636,7 @@ public class Client1
       	}
 
 
-      	//authenticateUser(correctHash);
+      	authenticateUser(correctHash);
 
       	// String input = "";
       	// while(!input.equals("y")){

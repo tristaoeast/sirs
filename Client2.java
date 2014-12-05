@@ -557,7 +557,7 @@ public class Client2
 		
 			bob = new Client2(localPort, serverName, port);
 
-		    //authenticateUser(correctHash);
+		    authenticateUser(correctHash);
 
 		     // String input = "";
 	      // 	while(!input.equals("y")){
