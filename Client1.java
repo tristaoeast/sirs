@@ -345,7 +345,7 @@ public class Client1
      			while(!(PasswordHash.validatePassword(passwd = cons.readPassword("[%s]", "Password:"),correctHash)))
       				System.out.println("Wrong password, please try again");
       			java.util.Arrays.fill(passwd, ' ');
-      			System.out.println("Password is clear: " + passwd);
+      			// System.out.println("Password is clear: " + passwd);
       		}
         	catch(NoSuchAlgorithmException e)
         	{

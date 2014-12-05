@@ -318,7 +318,7 @@ public class Client2
 	}
 
 	private static void authenticateUser(String correctHash){
-		System.out.println("Welcome back, Alice. Please enter your password:");
+		System.out.println("Welcome back, Bob. Please enter your password:");
 
      		PasswordHash ph = new PasswordHash();
      		char[] passwd;
@@ -331,7 +331,7 @@ public class Client2
      			while(!(PasswordHash.validatePassword(passwd = cons.readPassword("[%s]", "Password:"),correctHash)))
       				System.out.println("Wrong password, please try again");
       			java.util.Arrays.fill(passwd, ' ');
-      			System.out.println("Password is clear: " + passwd);
+      			// System.out.println("Password is clear: " + passwd);
 
       		}
         	catch(NoSuchAlgorithmException e)
