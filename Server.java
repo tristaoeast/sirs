@@ -49,30 +49,35 @@ public class Server extends Thread
 
    private void wrongFormatMessage(Socket server, DataOutputStream out, String username) throws IOException,FileNotFoundException,UnsupportedEncodingException,Exception
    {
+      Utils utils = new Utils();
       String errorMessage = "ERROR: Message with wrong format received. Aborting current connection...";
       System.out.println(errorMessage);
-      out.writeUTF(encryptAndComposeMsg("Server,ERROR,"+errorMessage+","+utils.generateRandomNonce()+","+utils.getTimeStamp(),username));
+      out.writeUTF(encryptAndComposeMsg("Server,ERROR,"+errorMessage+","+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()),username));
       server.close();
    }
 
    private void expiredMessage(Socket server, DataOutputStream out, String username) throws IOException,FileNotFoundException,UnsupportedEncodingException,Exception
    {
+      Utils utils = new Utils();
       String errorMessage = "ERROR: Message with expired timestamp or invalid nonce received. Aborting current connection...";
       System.out.println(errorMessage);
-      out.writeUTF(encryptAndComposeMsg("Server,ERROR,"+errorMessage+","+utils.generateRandomNonce()+","+utils.getTimeStamp(),username));
+      out.writeUTF(encryptAndComposeMsg("Server,ERROR,"+errorMessage+","+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()),username));
       server.close();
    }
 
    private void wrongCredentialsProvided(Socket server, DataOutputStream out, String username) throws IOException,FileNotFoundException,UnsupportedEncodingException,Exception
    {
+      Utils utils = new Utils();
       String errorMessage = "ERROR: Wrong credentials provided. Aborting current connection...";
       System.out.println(errorMessage);
-      out.writeUTF(encryptAndComposeMsg("Server,ERROR,"+errorMessage+","+utils.generateRandomNonce()+","+utils.getTimeStamp(),username));
+      out.writeUTF(encryptAndComposeMsg("Server,ERROR,"+errorMessage+","+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()),username));
       server.close();
    }
 
    private String[] decryptAndSplitMsg(String cipheredMsg, String iv, String username) throws FileNotFoundException,UnsupportedEncodingException,Exception
    {
+      AES aes = new AES();
+      Utils utils = new Utils();
       String decipheredText = aes.decrypt(utils.stringToByteArray(cipheredMsg), aes.readKeyFromFile(username + "KeyStore"), iv);
       String[] decMsg = decipheredText.split(",");
       return decMsg;
@@ -80,6 +85,8 @@ public class Server extends Thread
 
    private String encryptAndComposeMsg(String plaintext, String username) throws FileNotFoundException,UnsupportedEncodingException,Exception
    {
+      AES aes = new AES();
+      Utils utils = new Utils();
       String iv = utils.generateRandomIV();
       byte[] cipheredMsg = aes.encrypt(plaintext, aes.readKeyFromFile(username + "KeyStore"), iv);
       return "Server:" + utils.byteArrayToString(cipheredMsg) + ":" + iv;
@@ -92,6 +99,7 @@ public class Server extends Thread
       {
          try
          {
+            Utils utils = new Utils();
             System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
             Socket server = serverSocket.accept();
             // SocketAddress structure: hostname/ip:port
@@ -109,7 +117,7 @@ public class Server extends Thread
             else {
                String errorMessage = "ERROR: Message with wrong format received. Aborting current connection...";
                System.out.println(errorMessage);
-               // out.writeUTF(encryptAndComposeMsg("Server,ERROR,"+errorMessage+","+utils.generateRandomNonce()+","+utils.getTimeStamp(),username));
+               out.writeUTF(encryptAndComposeMsg("Server,ERROR,"+errorMessage+","+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()),outerMsg[0]));
                server.close();
                continue;
             }
@@ -125,7 +133,7 @@ public class Server extends Thread
                         noncesMap.put(decMsg[2], utils.getTimeStamp());
                         String serverNonce = utils.generateRandomNonce();
                         System.out.println(outerMsg[0]+" registered successfully with address " + remoteAddr);
-                        out.writeUTF(encryptAndComposeMsg("Server,ACKREG,"+outerMsg[0]+","+remoteAddr.toString()+","+serverNonce+","+utils.getTimeStamp(), outerMsg[0]));
+                        out.writeUTF(encryptAndComposeMsg("Server,ACKREG,"+outerMsg[0]+","+remoteAddr.toString()+","+serverNonce+","+String.valueOf(System.currentTimeMillis()), outerMsg[0]));
                         server.close();
                         continue;
                         
@@ -151,7 +159,7 @@ public class Server extends Thread
                         DataOutputStream outToBob = new DataOutputStream(bob.getOutputStream());
                         DataInputStream inFromBob = new DataInputStream(bob.getInputStream());
 
-                        outToBob.writeUTF(encryptAndComposeMsg("Server,REQ,"+outerMsg[0]+","+serverNonce+","+utils.getTimeStamp(), decMsg[decMsg.length-3]));
+                        outToBob.writeUTF(encryptAndComposeMsg("Server,REQ,"+outerMsg[0]+","+serverNonce+","+String.valueOf(System.currentTimeMillis()), decMsg[decMsg.length-3]));
                         System.out.println("Scheduling request from " + outerMsg[0] + " successfully sent to " + decMsg[decMsg.length-3]);
                         
                         // Now the server waits for the acceptance or rejection of the request for a meeting schedule and forwards the response to the requester
@@ -164,7 +172,7 @@ public class Server extends Thread
                         else {
                            String errorMessage = "ERROR: Message with wrong format received. Aborting current connection...";
                            System.out.println(errorMessage);
-                           // out.writeUTF(encryptAndComposeMsg("Server,ERROR,"+errorMessage+","+utils.generateRandomNonce()+","+utils.getTimeStamp(),username));
+                           // out.writeUTF(encryptAndComposeMsg("Server,ERROR,"+errorMessage+","+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()),username));
                            server.close();
                            bob.close();
                            continue;
@@ -177,7 +185,7 @@ public class Server extends Thread
                                  if((validNonce(rDecMsg[rDecMsg.length-2], utils.getTimeStamp())) 
                                     && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(rDecMsg[rDecMsg.length-1]))) {
                                     //If we reach this point is because everything checks out, so we forward the acceptance message
-                                    out.writeUTF(encryptAndComposeMsg("Server,ACCEPT,"+rOuterMsg[0]+","+bobHostname+","+bobPort+","+utils.generateRandomNonce()+","+utils.getTimeStamp(), rDecMsg[rDecMsg.length-3]));
+                                    out.writeUTF(encryptAndComposeMsg("Server,ACCEPT,"+rOuterMsg[0]+","+bobHostname+","+bobPort+","+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()), rDecMsg[rDecMsg.length-3]));
                                     server.close();
                                     bob.close();
                                     System.out.println("Forwarded successfully " + rOuterMsg[0]+ " acceptance of " + rDecMsg[rDecMsg.length-3] + " request to schedule a meeting");
@@ -193,7 +201,7 @@ public class Server extends Thread
                                  if((validNonce(rDecMsg[rDecMsg.length-2], utils.getTimeStamp())) 
                                     && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(rDecMsg[rDecMsg.length-1]))) {
                                     //If we reach this point is because everything checks out, so we forward the acceptance message
-                                    out.writeUTF(encryptAndComposeMsg("Server,REJECT,"+rOuterMsg[0]+","+utils.generateRandomNonce()+","+utils.getTimeStamp(), rDecMsg[rDecMsg.length-3]));
+                                    out.writeUTF(encryptAndComposeMsg("Server,REJECT,"+rOuterMsg[0]+","+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()), rDecMsg[rDecMsg.length-3]));
                                     server.close();
                                     bob.close();
                                     System.out.println("Forwarded successfully " + rOuterMsg[0]+ " rejection of " + rDecMsg[rDecMsg.length-3] + " request to schedule a meeting");

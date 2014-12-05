@@ -7,6 +7,10 @@ import java.security.spec.InvalidKeySpecException;
 //import oracle.security.crypto.core.*;
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.security.NoSuchProviderException;
+import java.security.*;
+import javax.crypto.*;
+import java.util.GregorianCalendar;
 
 public class Client1
 {
@@ -16,6 +20,7 @@ public class Client1
 	private TreeMap<String, Long> noncesMap;
 	private AES aes;
 	private Utils utils;
+	private GregorianCalendar cal;
 
 	public void Client1(){
 		int[][][] _calendar = new int[13][32][24];
@@ -27,6 +32,8 @@ public class Client1
 
 	public String[] parseMessage(String msg, Socket socketClient, DataOutputStream out) throws IOException, Exception{
 
+		AES aes = new AES();
+		Utils utils = new Utils();
 		String[] maux1 = msg.split(":");
 		String[] maux2 = null;
 		String[] parsedMsg = null;
@@ -163,6 +170,8 @@ public class Client1
 
 	public void findCommonDate(Socket socketClient, DataOutputStream out, DataInputStream in){
 
+		AES aes = new AES();
+		Utils utils = new Utils();
 		int[] dateInterval = new int[4];
 		int lastCheckedDay, lastCheckedMonth;
 
@@ -185,7 +194,7 @@ public class Client1
 							i++;
 						}
 						else{
-							String msg = "Alice, CHECK, " + Integer.toString(lastCheckedDay) + "/" + Integer.toString(lastCheckedMonth) + "/14-" + Integer.toString(i) + "," + utils.generateRandomNonce()+", " + utils.getTimeStamp();
+							String msg = "Alice,CHECK," + Integer.toString(lastCheckedDay) + "/" + Integer.toString(lastCheckedMonth) + "/14-" + Integer.toString(i) + "," + utils.generateRandomNonce()+"," + String.valueOf(System.currentTimeMillis());
 							String iv = utils.generateRandomIV();
 							out.writeUTF("Alice:" + utils.byteArrayToString(aes.encrypt(msg, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
 						}
@@ -211,7 +220,7 @@ public class Client1
 							i++;
 						}
 						else{
-							String msg = "Alice, CHECK, " + Integer.toString(lastCheckedDay) + "/" + Integer.toString(lastCheckedMonth) + "/14-" + Integer.toString(i) + "," + utils.generateRandomNonce()+", " + utils.getTimeStamp();
+							String msg = "Alice,CHECK," + Integer.toString(lastCheckedDay) + "/" + Integer.toString(lastCheckedMonth) + "/14-" + Integer.toString(i) + "," + utils.generateRandomNonce()+"," + String.valueOf(System.currentTimeMillis());
 							String iv = utils.generateRandomIV();
 							out.writeUTF("Alice:" + utils.byteArrayToString(aes.encrypt(msg, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
 						}
@@ -226,7 +235,7 @@ public class Client1
 			if(!parsedMsg[3].equals("Yes")){
 
 				System.out.println("Unable to find common date.");
-				out.writeUTF("Alice: Alice, unable to find common date");
+				out.writeUTF("Alice:Alice,unable to find common date");
 			}
 			//socketClient.close();
 		}
@@ -262,7 +271,7 @@ public class Client1
 
 		String errorMessage = "ERROR: Message with wrong format received. Aborting current connection...";
 		System.out.println(errorMessage);
-		out.writeUTF("ALice:Alice,ERROR" + errorMessage);
+		out.writeUTF("Alice:Alice,ERROR," + errorMessage);
 		socketClient.close();
 	}
 
@@ -270,7 +279,7 @@ public class Client1
 
 		String errorMessage = "ERROR: Message with expired timstamp pr invalid nonce received. Aborting current connection...";
 		System.out.println(errorMessage);
-		out.writeUTF("Alice:Alice,ERROR" + errorMessage);
+		out.writeUTF("Alice:Alice,ERROR," + errorMessage);
 		socketClient.close();
 	}
 
@@ -278,13 +287,15 @@ public class Client1
 
 		String errorMessage = "ERROR: Wrong credentials provided. Aborting current connection...";
 		System.out.println(errorMessage);
-		out.writeUTF("Alice:Alice,ERROR" + errorMessage);
+		out.writeUTF("Alice:Alice,ERROR," + errorMessage);
 		socketClient.close();
 	}
 
 	public void createDHPublicValues(Socket socketClient, DataOutputStream out, DataInputStream in){
 
 		try{
+			AES aes = new AES();
+			Utils utils = new Utils();
 			String message = in.readUTF();
 			String[] parsedMsg = null;
 			BigInteger x, A, p, g, B;
@@ -300,7 +311,7 @@ public class Client1
 			A = g.modPow(x, p);
 
 
-			message = "Alice, DH, Bob, " + A.toString() + ", " + utils.generateRandomNonce()+", " + utils.getTimeStamp();
+			message = "Alice, DH, Bob," + A.toString() + "," + utils.generateRandomNonce()+"," + String.valueOf(System.currentTimeMillis());
 			String iv = utils.generateRandomIV();
 			out.writeUTF("Alice:" + utils.byteArrayToString(aes.encrypt(message, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
 
@@ -311,7 +322,7 @@ public class Client1
 			_sharedKey = B.modPow(x, p);
 			
 			Na = utils.generateRandomNonce();
-			message = "Alice, DH, Bob, " + ", " + Na +", " + utils.getTimeStamp();
+			message = "Alice,DH,Bob," + "," + Na +"," + String.valueOf(System.currentTimeMillis());
 			iv = utils.generateRandomIV();
 			out.writeUTF("Alice:" + utils.byteArrayToString(aes.encrypt(message, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
 
@@ -322,7 +333,7 @@ public class Client1
 				socketClient.close();
 			}
 			
-			message = "Alice, DH, Bob, " + ", " + parsedMsg[5] +", " + utils.getTimeStamp();
+			message = "Alice,DH,Bob," + "," + parsedMsg[5] +"," + String.valueOf(System.currentTimeMillis());
 			iv = utils.generateRandomIV();
 			out.writeUTF("Alice:" + utils.byteArrayToString(aes.encrypt(message, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
 		}
@@ -375,7 +386,84 @@ public class Client1
     	return s;
 	}
 
+	public String encryptAndComposeMsg(String plaintext, String username) throws IllegalBlockSizeException,InvalidKeyException,NoSuchPaddingException,InvalidAlgorithmParameterException,BadPaddingException,NoSuchProviderException,FileNotFoundException,UnsupportedEncodingException,NoSuchAlgorithmException,IOException
+   	{
+   		AES aes = new AES();
+   		Utils utils = new Utils();
+      String iv = utils.generateRandomIV();
+      // System.out.println("ENTREI!!");
+      byte[] cipheredMsg = aes.encrypt(plaintext, aes.readKeyFromFile(username + "KeyStore"), iv);
+      return "Alice:" + utils.byteArrayToString(cipheredMsg) + ":" + iv;
+   	}
+
+   	public String[] decryptAndSplitMsg(String cipheredMsg, String iv, String username) throws IllegalBlockSizeException,InvalidKeyException,NoSuchAlgorithmException,NoSuchPaddingException,InvalidAlgorithmParameterException,BadPaddingException,IOException,FileNotFoundException,UnsupportedEncodingException
+   	{
+   		AES aes = new AES();
+   		Utils utils = new Utils();
+      String decipheredText = aes.decrypt(utils.stringToByteArray(cipheredMsg), aes.readKeyFromFile(username + "KeyStore"), iv);
+      String[] decMsg = decipheredText.split(",");
+      return decMsg;
+   	}
+
 	private void registerWithServer(String serverName, int serverPort){
+		try{
+			Utils utils = new Utils();
+			Socket socketClient = new Socket(serverName, serverPort);
+			OutputStream outToServer = socketClient.getOutputStream();
+			DataOutputStream out = new DataOutputStream(outToServer);
+			while(out == null)
+				out = new DataOutputStream(outToServer);
+			String response = "";
+			while(!response.equals("ACKREG")){
+					String testMsg = encryptAndComposeMsg("Alice,REG,"+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()),"Alice");
+					// System.out.println(testMsg); 
+					out.writeUTF(testMsg);
+					System.out.println("Sent registration to server. Awaiting response...");
+					InputStream inFromServer = socketClient.getInputStream();
+					DataInputStream in = new DataInputStream(inFromServer);
+					String inMsg = in.readUTF();
+		            String[] outerMsg = inMsg.split(":");
+		            String[] decMsg = null;
+		            if(outerMsg.length == 3){
+		               decMsg = decryptAndSplitMsg(outerMsg[1], outerMsg[2], "Alice");
+		            }
+		            else {
+		               String errorMessage = "ERROR: Message with wrong format received. Aborting current connection...";
+		               System.out.println(errorMessage);
+		               socketClient.close();
+		               continue;
+		            }
+		            if(outerMsg[0].equals(decMsg[0]) && (decMsg.length > 1)) { // Checks if it is the actual user
+		               
+		               if(decMsg[1].equals("ACKREG")) {
+		               	  System.out.println("Registered with server with success!");
+		                  socketClient.close();
+		                  break;
+		               } else {
+		               	socketClient.close();
+		               	continue;
+		               }
+					}
+			}
+		} catch (FileNotFoundException e){e.printStackTrace();
+		} catch (UnknownHostException e){e.printStackTrace();
+		} catch (IOException e){e.printStackTrace();
+		} catch (NoSuchAlgorithmException e){e.printStackTrace();
+		} catch (NoSuchProviderException e){e.printStackTrace();
+		} catch (IllegalBlockSizeException e){e.printStackTrace();
+		} catch (InvalidKeyException e){e.printStackTrace();
+		} catch (NoSuchPaddingException e){e.printStackTrace();
+		} catch (InvalidAlgorithmParameterException e){e.printStackTrace();
+		} catch (BadPaddingException e){e.printStackTrace();
+		// } catch (IllegalBlockSizeException e){e.printStackTrace();
+		// } catch (IllegalBlockSizeException e){e.printStackTrace();
+		// } catch (IllegalBlockSizeException e){e.printStackTrace();
+
+
+		}
+	}
+
+	private void requestMeeting(String serverName, int serverPort){
 
 	}
 
@@ -418,11 +506,11 @@ public class Client1
 		      	if(opt == 1){
 		      		boolean repeat1 = true;
 		      		while(repeat1){
-			      		System.out.println("Who do you want to connect to?");
+			      		System.out.println("Who do you want to schedule a meeting with?");
 			      		System.out.println("[1] Bob");
 			      		opt = Integer.parseInt(getInput());
 			      		if(opt == 1){
-			      		
+			      			alice.requestMeeting(serverName, port);
 			      		}
 			      		else break;
 		      		}

@@ -4,6 +4,7 @@ import java.security.SecureRandom;
 import java.math.BigInteger;
 import java.util.GregorianCalendar;
 import java.io.UnsupportedEncodingException;
+import java.util.Calendar;
 
 
 public class Utils 
@@ -11,7 +12,7 @@ public class Utils
 	public static final int NONCE_BYTE_SIZE = 8;
     public static final int IV_BYTE_SIZE = 8;
 
-    private GregorianCalendar cal;
+    private Calendar cal;
 
     public Utils (){
         cal = new GregorianCalendar();
@@ -67,7 +68,7 @@ public class Utils
 
     public long getTimeStamp()
     {
-        return cal.getTimeInMillis();
+        return System.currentTimeMillis();
     }
 
 

@@ -17,6 +17,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import javax.crypto.IllegalBlockSizeException;
 import java.security.InvalidKeyException;
+import java.security.*;
+import javax.crypto.*;
  
 public class AES {
   
@@ -35,6 +37,8 @@ public class AES {
   private byte[] getEncryptionKey(){
     return encryptionKey;
   }
+
+  
 
   public SecretKey generateSecretKey()
   {
@@ -115,14 +119,14 @@ public class AES {
     }
   }
  
-  public byte[] encrypt(String plainText, byte[] encryptionKey, String iv) throws Exception {
+  public byte[] encrypt(String plainText, byte[] encryptionKey, String iv) throws BadPaddingException,InvalidAlgorithmParameterException,NoSuchPaddingException,NoSuchAlgorithmException,UnsupportedEncodingException,InvalidKeyException,IllegalBlockSizeException {
     Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
     SecretKeySpec key = new SecretKeySpec(encryptionKey, "AES");
     cipher.init(Cipher.ENCRYPT_MODE, key,new IvParameterSpec(iv.getBytes("UTF-8")));
     return cipher.doFinal(plainText.getBytes("UTF-8"));
   }
  
-  public String decrypt(byte[] cipherText, byte[] encryptionKey, String iv) throws Exception {
+  public String decrypt(byte[] cipherText, byte[] encryptionKey, String iv) throws BadPaddingException,InvalidAlgorithmParameterException,NoSuchPaddingException,NoSuchAlgorithmException,UnsupportedEncodingException,InvalidKeyException,IllegalBlockSizeException {
     Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
     SecretKeySpec key = new SecretKeySpec(encryptionKey, "AES");
     cipher.init(Cipher.DECRYPT_MODE, key,new IvParameterSpec(iv.getBytes("UTF-8")));

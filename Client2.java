@@ -48,6 +48,8 @@ public class Client2
 
 	public String[] parseMessage(String msg, Socket socketClient, DataOutputStream out) throws IOException, Exception{
 
+		Utils utils = new Utils();
+		AES aes = new AES();
 		String[] maux1 = msg.split(":");
 		String[] maux2 = null;
 		String[] parsedMsg = null;
@@ -168,7 +170,8 @@ public class Client2
 	}
 
 	public void establishMeetingDate(Socket server){
-
+		Utils utils = new Utils();
+		AES aes = new AES();
 		String message = "";
 		char msg_char = ' ';
    		String serverName = "";
@@ -199,12 +202,12 @@ public class Client2
 				if(!parsedMsg[3].equals("ack:yes")){
 					if(!checkCalendarDate(month, day, hour)){
 
-						String msg = "Bob, CHECK, No," + utils.generateRandomNonce()+", " + utils.getTimeStamp();
+						String msg = "Bob,CHECK,No," + utils.generateRandomNonce()+"," + String.valueOf(System.currentTimeMillis());
 						String iv = utils.generateRandomIV();
 						out.writeUTF("Bob:" + utils.byteArrayToString(aes.encrypt(msg, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
 					}
 					else {
-						String msg = "Bob, CHECK, Yes," + utils.generateRandomNonce()+", " + utils.getTimeStamp();
+						String msg = "Bob,CHECK,Yes," + utils.generateRandomNonce()+"," + String.valueOf(System.currentTimeMillis());
 						String iv = utils.generateRandomIV();
 						out.writeUTF("Bob:" + utils.byteArrayToString(aes.encrypt(msg, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
 					}
@@ -268,6 +271,8 @@ public class Client2
 	public void createDHPublicValues(Socket socketClient, DataOutputStream out, DataInputStream in){
 
 		try{
+			Utils utils = new Utils();
+			AES aes = new AES();
 			String message = in.readUTF();
 			String[] parsedMsg = null;
 			BigInteger x, A, p, g, B;
@@ -283,7 +288,7 @@ public class Client2
 			B = g.modPow(x, p);
 
 
-			message = "Bob, DH, Alice, " + B.toString() + ", " + utils.generateRandomNonce()+", " + utils.getTimeStamp();
+			message = "Bob,DH,Alice," + B.toString() + "," + utils.generateRandomNonce()+"," + String.valueOf(System.currentTimeMillis());
 			String iv = utils.generateRandomIV();
 			out.writeUTF("Bob:" + utils.byteArrayToString(aes.encrypt(message, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
 
@@ -297,7 +302,7 @@ public class Client2
 			parsedMsg = parseMessage(message, socketClient, out);
 
 			Nb = utils.generateRandomNonce();
-			message = "Alice, DH, Bob, " + ", " + parsedMsg[4] + ", " + Nb + ", " + utils.getTimeStamp();
+			message = "Alice,DH,Bob," + "," + parsedMsg[4] + "," + Nb + "," + String.valueOf(System.currentTimeMillis());
 			iv = utils.generateRandomIV();
 			out.writeUTF("Alice:" + utils.byteArrayToString(aes.encrypt(message, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
 
