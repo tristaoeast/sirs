@@ -179,6 +179,7 @@ public class Server extends Thread
                                     //If we reach this point is because everything checks out, so we forward the acceptance message
                                     out.writeUTF(encryptAndComposeMsg("Server,ACCEPT,"+rOuterMsg[0]+","+bobHostname+","+bobPort+","+utils.generateRandomNonce()+","+utils.getTimeStamp(), rDecMsg[rDecMsg.length-3]));
                                     server.close();
+                                    bob.close();
                                     System.out.println("Forwarded successfully " + rOuterMsg[0]+ " acceptance of " + rDecMsg[rDecMsg.length-3] + " request to schedule a meeting");
                                     continue;
                                  }
@@ -194,6 +195,7 @@ public class Server extends Thread
                                     //If we reach this point is because everything checks out, so we forward the acceptance message
                                     out.writeUTF(encryptAndComposeMsg("Server,REJECT,"+rOuterMsg[0]+","+utils.generateRandomNonce()+","+utils.getTimeStamp(), rDecMsg[rDecMsg.length-3]));
                                     server.close();
+                                    bob.close();
                                     System.out.println("Forwarded successfully " + rOuterMsg[0]+ " rejection of " + rDecMsg[rDecMsg.length-3] + " request to schedule a meeting");
                                     continue;
                                  }
@@ -210,11 +212,13 @@ public class Server extends Thread
                   else {wrongFormatMessage(server, out, outerMsg[0]);continue;}
                }
 
-               else if(decMsg[1].equals("ERROR") && (decMsg.length==3)) { // If an error message is received from the client
-                  //TODO
-                  System.out.println("Client says: " + decMsg[2]);
-                  server.close();
-                  continue;
+               else if(decMsg[1].equals("ERROR") && (decMsg.length==5)) { // If an error message is received from the client
+                  if((validNonce(decMsg[decMsg.length-2], utils.getTimeStamp())) 
+                     && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(decMsg[decMsg.length-1]))){
+                     System.out.println("Client says: " + decMsg[2]);
+                     server.close();
+                     continue;
+                  }
                }
 
             }
