@@ -54,9 +54,17 @@ public class Client2
 		String[] maux2 = null;
 		String[] parsedMsg = null;
 		if(maux1.length == 3){
-			utils.stringToByteArray(_sharedKey.toString());
-			String decryptedMsg = aes.decrypt(utils.stringToByteArray(maux1[1]), utils.stringToByteArray(_sharedKey.toString()), maux1[2]);
-			maux2 = decryptedMsg.split(",");
+
+			if(maux1[0].equals("Server")){
+
+				String decryptedMsg = aes.decrypt(utils.stringToByteArray(maux1[1]), aes.readKeyFromFile("BobKeyStore"), maux1[2]);
+				maux2 = decryptedMsg.split(",");
+			}
+			else{
+				String decryptedMsg = aes.decrypt(utils.stringToByteArray(maux1[1]), utils.stringToByteArray(_sharedKey.toString()), maux1[2]);
+				maux2 = decryptedMsg.split(",");
+			}
+
 		}
 		else{
 			wrongFormatMessage(socketClient, out);
@@ -161,7 +169,6 @@ public class Client2
 			}
 			else{
 				System.out.println("Received unknown type message.");
-				socketClient.close();
 			}
 		}
 		else{
@@ -293,42 +300,58 @@ public class Client2
 		try{
 			Utils utils = new Utils();
 			AES aes = new AES();
+			String iv;
 			String message = in.readUTF();
 			String[] parsedMsg = null;
-			BigInteger x, A, p, g, B;
+			BigInteger x = null, A, p = null, g, B = null;
 			int bitLength = 1024; // 1024 bits
 			SecureRandom rnd = new SecureRandom();
-			String Nb;
+			String Nb = null;
 		
 			parsedMsg = parseMessage(message, socketClient, out);
 
-			x = BigInteger.probablePrime(bitLength, rnd);
-			p = new BigInteger(parsedMsg[4]);
-			g = new BigInteger(parsedMsg[5]);
-			B = g.modPow(x, p);
-
-
-			message = "Bob,DH,Alice," + B.toString() + "," + utils.generateRandomNonce()+"," + String.valueOf(System.currentTimeMillis());
-			String iv = utils.generateRandomIV();
-			out.writeUTF("Bob:" + utils.byteArrayToString(aes.encrypt(message, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
-
+			if(!(parsedMsg == null)){
+				x = BigInteger.probablePrime(bitLength, rnd);
+				p = new BigInteger(parsedMsg[4]);
+				g = new BigInteger(parsedMsg[5]);
+				B = g.modPow(x, p);
+			
+				message = "Bob,DH,Alice," + B.toString() + "," + utils.generateRandomNonce()+"," + String.valueOf(System.currentTimeMillis());
+				iv = utils.generateRandomIV();
+				out.writeUTF("Bob:" + utils.byteArrayToString(aes.encrypt(message, aes.readKeyFromFile("BobKeyStore"), iv)) + ":" + iv);
+			}
+			else{
+				socketClient.close();
+			}
 			message = in.readUTF();
-			A = new BigInteger(parsedMsg[4]);
 			parsedMsg = parseMessage(message, socketClient, out);
 			
-			_sharedKey = B.modPow(x, p);
+			if(!(parsedMsg == null)){
+				A = new BigInteger(parsedMsg[4]);
+				_sharedKey = B.modPow(x, p);
+			}
+			else{
+				socketClient.close();
+			}
 
 			message = in.readUTF();
 			parsedMsg = parseMessage(message, socketClient, out);
 
-			Nb = utils.generateRandomNonce();
-			message = "Alice,DH,Bob," + "," + parsedMsg[4] + "," + Nb + "," + String.valueOf(System.currentTimeMillis());
-			iv = utils.generateRandomIV();
-			out.writeUTF("Alice:" + utils.byteArrayToString(aes.encrypt(message, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
+			if(!(parsedMsg == null)){
+
+				Nb = utils.generateRandomNonce();
+				message = "Alice,DH,Bob," + "," + parsedMsg[4] + "," + Nb + "," + String.valueOf(System.currentTimeMillis());
+				iv = utils.generateRandomIV();
+				out.writeUTF("Alice:" + utils.byteArrayToString(aes.encrypt(message, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
+			}
+			else{
+				socketClient.close();
+			}
 
 			message = in.readUTF();
 			parsedMsg = parseMessage(message, socketClient, out);
-			if(!Nb.equals(parsedMsg[4])){
+
+			if((!(parsedMsg == null)) || (!Nb.equals(parsedMsg[4]))){
 
 				socketClient.close();
 			}
