@@ -269,14 +269,18 @@ public class Client1
 
 	private boolean validNonce(String nonce, long currentTimeStamp) throws IOException{
 
-		if(noncesMap.containsKey(nonce)){
-		// long tempTimeStamp = (long)noncesMap.get(nonce);
-			if(!(withinTimeFrame(currentTimeStamp, noncesMap.get(nonce))))
-				noncesMap.remove(nonce);
-			return false;
+		try{
+			if(noncesMap.containsKey(nonce)){
+			// long tempTimeStamp = (long)noncesMap.get(nonce);
+				if(!(withinTimeFrame(currentTimeStamp, noncesMap.get(nonce))))
+					noncesMap.remove(nonce);
+				return false;
+			}
+			else
+			return true;
+		} catch (NullPointerException e) {
+			return true;
 		}
-		else
-		return true;
 	}
 
 	private boolean withinTimeFrame(long currentTimeStamp, long oldTimeStamp){
@@ -590,11 +594,11 @@ public class Client1
 
       	// authenticateUser(correctHash);
 
-      	String input = "";
-      	while(!input.equals("y")){
-      		System.out.println("Register with server? [y/n]");
-      		input = getInput();
-      	}
+      	// String input = "";
+      	// while(!input.equals("y")){
+      	// 	System.out.println("Register with server? [y/n]");
+      	// 	input = getInput();
+      	// }
       	alice.registerWithServer(serverName, port);
 
       	boolean repeat = true;

@@ -30,8 +30,6 @@ public class Client2
 		noncesMap = new TreeMap<String, Long>();
 		aes = new AES();
 		utils = new Utils();
-		_serverPort = serverPort;
-		_serverName = serverName;
 		serverSocket = new ServerSocket(localPort);
 		serverSocket.setSoTimeout(30000);
 
@@ -66,6 +64,7 @@ public class Client2
 				String decryptedMsg = aes.decrypt(utils.stringToByteArray(maux1[1]), utils.stringToByteArray(_sharedKey.toString()), maux1[2]);
 				maux2 = decryptedMsg.split(",");
 			}
+
 		}
 		else{
 			wrongFormatMessage(socketClient, out);
@@ -290,7 +289,7 @@ public class Client2
       String iv = utils.generateRandomIV();
       // System.out.println("ENTREI!!");
       byte[] cipheredMsg = aes.encrypt(plaintext, aes.readKeyFromFile(username + "KeyStore"), iv);
-      return "Alice:" + utils.byteArrayToString(cipheredMsg) + ":" + iv;
+      return "Bob:" + utils.byteArrayToString(cipheredMsg) + ":" + iv;
    	}
 
    	public String[] decryptAndSplitMsg(String cipheredMsg, String iv, String username) throws IllegalBlockSizeException,InvalidKeyException,NoSuchAlgorithmException,NoSuchPaddingException,InvalidAlgorithmParameterException,BadPaddingException,IOException,FileNotFoundException,UnsupportedEncodingException
@@ -438,7 +437,7 @@ public class Client2
 					Socket socketClient = new Socket(serverName, serverPort);
 					OutputStream outToServer = socketClient.getOutputStream();
 					DataOutputStream out = new DataOutputStream(outToServer);
-					String testMsg = encryptAndComposeMsg("Alice,REG,"+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()),"Alice");
+					String testMsg = encryptAndComposeMsg("Bob,REG,"+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()),"Bob");
 					// System.out.println(testMsg); 
 					out.writeUTF(testMsg);
 					System.out.println("Sent registration to server. Awaiting response...");
@@ -488,12 +487,14 @@ public class Client2
 
 	public static void main(String [] args){
 
+		Client2 bob;
 		String message = "";
 		char msg_char = ' ';
    		String serverName = "";
    		int port = 0;
    		int localPort = 0;
    		String correctHash = "1000:aa78d57810a93e7378856693ecabf23fdd33325ec2778ab2:66d9c6667e6c48feb5c709ca0803de5db59ebdaeb29b9b64";
+   		Utils utils = new Utils();
 
    		if(args.length != 3) {
    			System.err.println("Too few arguments. Run using Client1 [locaPort] [serverHostname] [serverPort]");
@@ -509,27 +510,38 @@ public class Client2
 
 		try{
 		
-		Client2 bob = new Client2(localPort, serverName, port);
+			bob = new Client2(localPort, serverName, port);
 
-	      	// authenticateUser(correctHash);
+		    // authenticateUser(correctHash);
 
-	      String input = "";
-      	while(!input.equals("y")){
-      		System.out.println("Register with server? [y/n]");
-      		input = getInput();
-      	}
-      	bob.registerWithServer(serverName, port);
-      	Socket server = bob.waitConnection();
+		     // String input = "";
+	      // 	while(!input.equals("y")){
+	      // 		System.out.println("Register with server? [y/n]");
+	      // 		input = getInput();
+      	// 	}
+	      	bob.registerWithServer(serverName, port);
+	      	
+	      	String response = "";
+	      	loop: while(!response.equals("y")){
+		      	Socket server = bob.waitConnection();
+		      	System.out.println("Meeting scheduling request received from Alice. Do you want to accept it? [y/n]");
+		      	response = getInput();
+		      	if(response.equals("y")){
+					DataOutputStream out = new DataOutputStream(server.getOutputStream());
+					out.writeUTF(bob.encryptAndComposeMsg("Bob,ACCEPT,Alice,"+utils.generateRandomNonce()+","+String.valueOf(System.currentTimeMillis()),"Bob"));
+		      		break;
+		      	}
+	      	}
 
-      	System.out.println("Meeting scheduling request received from Alice. Do you want to accept it? [y/n]");
-      	getInput();
-
-			bob.establishMeetingDate(server);
+			// bob.establishMeetingDate(server);
 		}
 		catch(SocketException s){
 			System.out.println("Socket timed out!");
 		}
 		catch(IOException e){
+			e.printStackTrace();
+		}
+		catch(Exception e){
 			e.printStackTrace();
 		}
 
