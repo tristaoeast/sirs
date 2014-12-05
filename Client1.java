@@ -1,14 +1,148 @@
 import java.net.*;
 import java.io.*;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+//import oracle.security.crypto.core.*;
+import java.math.BigInteger;
+import java.security.SecureRandom;
 
 public class Client1
 {
 	private int _calendar[][][];
+	//private DiffieHellman _dh;
+	private BigInteger _sharedKey;
+	private TreeMap<String, Long> noncesMap;
+	private AES aes;
+	private Utils utils;
 
 	public void Client1(){
 		int[][][] _calendar = new int[13][32][24];
+		//_dh = new DiffieHellman();
+		noncesMap = new TreeMap<String, Long>();
+		aes = new AES();
+		utils = new Utils();
+	}
+
+	public String[] parseMessage(String msg, Socket socketClient, DataOutputStream out) throws IOException, Exception{
+
+		String[] maux1 = msg.split(":");
+		String[] maux2 = null;
+		String[] parsedMsg = null;
+		if(maux1.length == 3){
+			String decryptedMsg = aes.decrypt(utils.stringToByteArray(maux1[1]), utils.stringToByteArray(_sharedKey.toString()), maux1[2]);
+			maux2 = decryptedMsg.split(",");
+		}
+		else{
+			wrongFormatMessage(socketClient, out);
+		}
+	
+		if(maux1[0].equals(maux2[0]) && (maux2.length > 1)){
+
+			if(maux2[1].equals("CHECK")){
+
+				if(maux2.length == 5){
+
+					if(validNonce(maux2[3], utils.getTimeStamp()) && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(maux2[4]))){
+
+						parsedMsg = new String[7];
+						parsedMsg[0] = maux1[0];
+						parsedMsg[1] = maux2[0];
+						parsedMsg[2] = maux2[1];
+						parsedMsg[3] = maux2[2];
+						parsedMsg[4] = maux2[3];
+						parsedMsg[5] = maux2[4];
+						parsedMsg[6] = maux1[2];
+						return parsedMsg;
+					}
+					else{
+						expiredMessage(socketClient, out);
+					}
+				}
+				else{
+					wrongFormatMessage(socketClient, out);
+				}
+			}
+			else if(maux2[1].equals("DH")){
+
+				if(maux2[0].equals("Server")){
+
+					if(maux2.length == 7){
+
+						if(validNonce(maux2[5], utils.getTimeStamp()) && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(maux2[6]))){
+
+							parsedMsg = new String[9];
+							parsedMsg[0] = maux1[0];
+							parsedMsg[1] = maux2[0];
+							parsedMsg[2] = maux2[1];
+							parsedMsg[3] = maux2[2];
+							parsedMsg[4] = maux2[3];
+							parsedMsg[5] = maux2[4];
+							parsedMsg[6] = maux2[5];
+							parsedMsg[7] = maux2[6];
+							parsedMsg[8] = maux1[2];
+							return parsedMsg;
+						}
+						else{
+							expiredMessage(socketClient, out);
+						}
+					}
+					else if(maux2.length == 6){
+
+						if(validNonce(maux2[4], utils.getTimeStamp()) && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(maux2[5]))){
+
+							parsedMsg = new String[8];
+							parsedMsg[0] = maux1[0];
+							parsedMsg[1] = maux2[0];
+							parsedMsg[2] = maux2[1];
+							parsedMsg[3] = maux2[2];
+							parsedMsg[4] = maux2[3];
+							parsedMsg[5] = maux2[4];
+							parsedMsg[6] = maux2[5];
+							parsedMsg[7] = maux1[2];
+							return parsedMsg;
+						}
+						else{
+							expiredMessage(socketClient, out);
+						}
+					}
+					else{
+						wrongFormatMessage(socketClient, out);
+					}
+				}
+				else{
+
+					if(maux2.length == 6){
+
+						if(validNonce(maux2[4], utils.getTimeStamp()) && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(maux2[5]))){
+
+							parsedMsg = new String[8];
+							parsedMsg[0] = maux1[0];
+							parsedMsg[1] = maux2[0];
+							parsedMsg[2] = maux2[1];
+							parsedMsg[3] = maux2[2];
+							parsedMsg[4] = maux2[3];
+							parsedMsg[5] = maux2[4];
+							parsedMsg[6] = maux2[5];
+							parsedMsg[7] = maux1[2];
+							return parsedMsg;
+						}
+					}
+					else{
+						wrongFormatMessage(socketClient, out);
+					}
+				}
+			}
+			else{
+				System.out.println("Received unknown type message.");
+				socketClient.close();
+			}
+		}
+		else{
+			wrongCredentialsProvided(socketClient, out);
+		}	
+		return parsedMsg;	
 	}
 
 	public int[] parseDateInput(String interval){
@@ -27,20 +161,14 @@ public class Client1
 		return dateInterval;
 	}
 
-	public void findCommonDate(){
+	public void findCommonDate(Socket socketClient, DataOutputStream out, DataInputStream in){
 
 		int[] dateInterval = new int[4];
 		int lastCheckedDay, lastCheckedMonth;
-   		String serverName = "";
-   		int port = 0;
 
 		try{
-			Socket socketClient = new Socket(serverName, port);
-			OutputStream outToServer = socketClient.getOutputStream();
-			DataOutputStream out = new DataOutputStream(outToServer);
 			String message = "";
-			InputStream inFromServer = socketClient.getInputStream();
-			DataInputStream in = new DataInputStream(inFromServer);
+			String[] parsedMsg = null;
 
 			dateInterval = parseDateInput(getInput());
 			lastCheckedDay = dateInterval[0];
@@ -57,15 +185,18 @@ public class Client1
 							i++;
 						}
 						else{
-							out.writeUTF("" + Integer.toString(lastCheckedDay) + "/" + Integer.toString(lastCheckedMonth) + "/14-" + Integer.toString(i));
+							String msg = "Alice, CHECK, " + Integer.toString(lastCheckedDay) + "/" + Integer.toString(lastCheckedMonth) + "/14-" + Integer.toString(i) + "," + utils.generateRandomNonce()+", " + utils.getTimeStamp();
+							String iv = utils.generateRandomIV();
+							out.writeUTF("Alice:" + utils.byteArrayToString(aes.encrypt(msg, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
 						}
 						message = in.readUTF();
-						if(message.equals("Yes")){ break;}
+						parsedMsg = parseMessage(message, socketClient, out);
+						if(parsedMsg[3].equals("Yes")){ break;}
 					}
-					if(message.equals("Yes")){ break;}
+					if(parsedMsg[3].equals("Yes")){ break;}
 					lastCheckedDay++;
 				}
-				if(message.equals("Yes")){ break;}
+				if(parsedMsg[3].equals("Yes")){ break;}
 				lastCheckedDay = 1;
 				lastCheckedMonth++;		
 			}
@@ -80,18 +211,125 @@ public class Client1
 							i++;
 						}
 						else{
-							out.writeUTF("" + Integer.toString(lastCheckedDay) + "/" + Integer.toString(lastCheckedMonth) + "/14-" + Integer.toString(i));
+							String msg = "Alice, CHECK, " + Integer.toString(lastCheckedDay) + "/" + Integer.toString(lastCheckedMonth) + "/14-" + Integer.toString(i) + "," + utils.generateRandomNonce()+", " + utils.getTimeStamp();
+							String iv = utils.generateRandomIV();
+							out.writeUTF("Alice:" + utils.byteArrayToString(aes.encrypt(msg, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
 						}
 						message = in.readUTF();
-						if(message.equals("Yes")){ break;}
+						parsedMsg = parseMessage(message, socketClient, out);
+						if(parsedMsg[3].equals("Yes")){ break;}
 					}
-					if(message.equals("Yes")){ break;}
+					if(parsedMsg[3].equals("Yes")){ break;}
 					lastCheckedDay++;
 				}
 			}
-			socketClient.close();
+			if(!parsedMsg[3].equals("Yes")){
+
+				System.out.println("Unable to find common date.");
+				out.writeUTF("Alice: Alice, unable to find common date");
+			}
+			//socketClient.close();
 		}
 		catch(IOException e){
+			e.printStackTrace();
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+
+	private boolean validNonce(String nonce, long currentTimeStamp) throws IOException{
+
+		if(noncesMap.containsKey(nonce)){
+		// long tempTimeStamp = (long)noncesMap.get(nonce);
+			if(!(withinTimeFrame(currentTimeStamp, noncesMap.get(nonce))))
+				noncesMap.remove(nonce);
+			return false;
+		}
+		else
+		return true;
+	}
+
+	private boolean withinTimeFrame(long currentTimeStamp, long oldTimeStamp){
+
+		if((currentTimeStamp - oldTimeStamp) < 30000)
+			return true;
+		else
+			return false;
+	}
+
+	private void wrongFormatMessage(Socket socketClient, DataOutputStream out) throws IOException{
+
+		String errorMessage = "ERROR: Message with wrong format received. Aborting current connection...";
+		System.out.println(errorMessage);
+		out.writeUTF("ALice:Alice,ERROR" + errorMessage);
+		socketClient.close();
+	}
+
+	private void expiredMessage(Socket socketClient, DataOutputStream out) throws IOException{
+
+		String errorMessage = "ERROR: Message with expired timstamp pr invalid nonce received. Aborting current connection...";
+		System.out.println(errorMessage);
+		out.writeUTF("Alice:Alice,ERROR" + errorMessage);
+		socketClient.close();
+	}
+
+	private void wrongCredentialsProvided(Socket socketClient, DataOutputStream out) throws IOException{
+
+		String errorMessage = "ERROR: Wrong credentials provided. Aborting current connection...";
+		System.out.println(errorMessage);
+		out.writeUTF("Alice:Alice,ERROR" + errorMessage);
+		socketClient.close();
+	}
+
+	public void createDHPublicValues(Socket socketClient, DataOutputStream out, DataInputStream in){
+
+		try{
+			String message = in.readUTF();
+			String[] parsedMsg = null;
+			BigInteger x, A, p, g, B;
+			int bitLength = 1024; // 1024 bits
+			SecureRandom rnd = new SecureRandom();
+			String Na;
+		
+			parsedMsg = parseMessage(message, socketClient, out);
+
+			x = BigInteger.probablePrime(bitLength, rnd);
+			p = new BigInteger(parsedMsg[4]);
+			g = new BigInteger(parsedMsg[5]);
+			A = g.modPow(x, p);
+
+
+			message = "Alice, DH, Bob, " + A.toString() + ", " + utils.generateRandomNonce()+", " + utils.getTimeStamp();
+			String iv = utils.generateRandomIV();
+			out.writeUTF("Alice:" + utils.byteArrayToString(aes.encrypt(message, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
+
+			message = in.readUTF();
+			parsedMsg = parseMessage(message, socketClient, out);
+			B = new BigInteger(parsedMsg[4]);
+
+			_sharedKey = B.modPow(x, p);
+			
+			Na = utils.generateRandomNonce();
+			message = "Alice, DH, Bob, " + ", " + Na +", " + utils.getTimeStamp();
+			iv = utils.generateRandomIV();
+			out.writeUTF("Alice:" + utils.byteArrayToString(aes.encrypt(message, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
+
+			message = in.readUTF();
+			parsedMsg = parseMessage(message, socketClient, out);
+			if(!Na.equals(parsedMsg[4])){
+
+				socketClient.close();
+			}
+			
+			message = "Alice, DH, Bob, " + ", " + parsedMsg[5] +", " + utils.getTimeStamp();
+			iv = utils.generateRandomIV();
+			out.writeUTF("Alice:" + utils.byteArrayToString(aes.encrypt(message, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
+		}
+		catch(IOException e){
+			e.printStackTrace();
+		}
+		catch(Exception e){
 			e.printStackTrace();
 		}
 	}
@@ -157,24 +395,31 @@ public class Client1
 
       	System.out.println("What do you want to do?");
 
-	client.findCommonDate();
+	try{
+		Socket socketClient = new Socket(serverName, port);
+		OutputStream outToServer = socketClient.getOutputStream();
+		DataOutputStream out = new DataOutputStream(outToServer);
+		InputStream inFromServer = socketClient.getInputStream();
+		DataInputStream in = new DataInputStream(inFromServer);
 
-      /*try
-      {
-         System.out.println("Connecting to " + serverName + " on port " + port);
-         //Establish socket connection with server
-         Socket socketClient = new Socket(serverName, port);
-         System.out.println("Just connected to " + client.getRemoteSocketAddress());
-         OutputStream outToServer = client.getOutputStream();
-         DataOutputStream out = new DataOutputStream(outToServer);
-         out.writeUTF("Hello from " + client.getLocalSocketAddress());
-         InputStream inFromServer = client.getInputStream();
-         DataInputStream in = new DataInputStream(inFromServer);
-         System.out.println("Server says " + in.readUTF());
-         socketClient.close();
-      }catch(IOException e)
-      {
-         e.printStackTrace();
-      }*/
+		client.createDHPublicValues(socketClient, out, in);
+		client.findCommonDate(socketClient, out, in);
+
+
+		/* System.out.println("Connecting to " + serverName + " on port " + port);
+		 //Establish socket connection with server
+		 Socket socketClient = new Socket(serverName, port);
+		 System.out.println("Just connected to " + client.getRemoteSocketAddress());
+		 OutputStream outToServer = client.getOutputStream();
+		 DataOutputStream out = new DataOutputStream(outToServer);
+		 out.writeUTF("Hello from " + client.getLocalSocketAddress());
+		 InputStream inFromServer = client.getInputStream();
+		 DataInputStream in = new DataInputStream(inFromServer);
+		 System.out.println("Server says " + in.readUTF());*/
+		 socketClient.close();
+	}
+	catch(IOException e){
+		e.printStackTrace();
+	}
    }
 }
