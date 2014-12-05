@@ -27,7 +27,7 @@ public class Server extends Thread
 
    }
 
-   private boolean validNounce(String nonce, long currentTimeStamp) throws IOException
+   private boolean validNonce(String nonce, long currentTimeStamp) throws IOException
    {
       if(noncesMap.containsKey(nonce)){
          // long tempTimeStamp = (long)noncesMap.get(nonce);
@@ -47,35 +47,42 @@ public class Server extends Thread
          return false;
    }
 
-   private void wrongFormatMessage(Socket server, DataOutputStream out) throws IOException
+   private void wrongFormatMessage(Socket server, DataOutputStream out, String username) throws IOException,FileNotFoundException,UnsupportedEncodingException,Exception
    {
       String errorMessage = "ERROR: Message with wrong format received. Aborting current connection...";
       System.out.println(errorMessage);
-      out.writeUTF("Server:Server,ERROR" + errorMessage);
+      out.writeUTF(encryptAndComposeMsg("Server,ERROR,"+errorMessage+","+utils.generateRandomNonce()+","+utils.getTimeStamp(),username));
       server.close();
    }
 
-   private void expiredMessage(Socket server, DataOutputStream out) throws IOException
+   private void expiredMessage(Socket server, DataOutputStream out, String username) throws IOException,FileNotFoundException,UnsupportedEncodingException,Exception
    {
-      String errorMessage = "ERROR: Message with expired timstamp pr invalid nonce received. Aborting current connection...";
+      String errorMessage = "ERROR: Message with expired timestamp or invalid nonce received. Aborting current connection...";
       System.out.println(errorMessage);
-      out.writeUTF("Server:Server,ERROR" + errorMessage);
+      out.writeUTF(encryptAndComposeMsg("Server,ERROR,"+errorMessage+","+utils.generateRandomNonce()+","+utils.getTimeStamp(),username));
       server.close();
    }
 
-   private void wrongCredentialsProvided(Socket server, DataOutputStream out) throws IOException
+   private void wrongCredentialsProvided(Socket server, DataOutputStream out, String username) throws IOException,FileNotFoundException,UnsupportedEncodingException,Exception
    {
       String errorMessage = "ERROR: Wrong credentials provided. Aborting current connection...";
       System.out.println(errorMessage);
-      out.writeUTF("Server:Server,ERROR" + errorMessage);
+      out.writeUTF(encryptAndComposeMsg("Server,ERROR,"+errorMessage+","+utils.generateRandomNonce()+","+utils.getTimeStamp(),username));
       server.close();
    }
 
-   private void sendMessage(DataOutputStream out, String plaintext) throws NoSuchAlgorithmException,NoSuchProviderException{
+   private String[] decryptAndSplitMsg(String cipheredMsg, String iv, String username) throws FileNotFoundException,UnsupportedEncodingException,Exception
+   {
+      String decipheredText = aes.decrypt(utils.stringToByteArray(cipheredMsg), aes.readKeyFromFile(username + "KeyStore"), iv);
+      String[] decMsg = decipheredText.split(",");
+      return decMsg;
+   }
+
+   private String encryptAndComposeMsg(String plaintext, String username) throws FileNotFoundException,UnsupportedEncodingException,Exception
+   {
       String iv = utils.generateRandomIV();
-
-
-      // out.writeUTF("Server:Server,ACKREG," + id[0] + "," + remoteAddr.toString() + "," + params[2] + "," + serverNonce + "," + utils.getTimeStamp());
+      byte[] cipheredMsg = aes.encrypt(plaintext, aes.readKeyFromFile(username + "KeyStore"), iv);
+      return "Server:" + utils.byteArrayToString(cipheredMsg) + ":" + iv;
    }
 
 
@@ -94,51 +101,84 @@ public class Server extends Thread
             DataOutputStream out = new DataOutputStream(server.getOutputStream());
             // inMsg structure: User:{Action,User,Nonce,TimeStamp}
             String inMsg = in.readUTF();
-            String[] id = inMsg.split(":");
-            //TODO: Decrypt id[1]
-            String[] params = null;
-            if(id.length == 3)
-               params = id[1].split(",");
+            String[] outerMsg = inMsg.split(":");
+            String[] decMsg = null;
+            if(outerMsg.length == 3){
+               decMsg = decryptAndSplitMsg(outerMsg[1], outerMsg[2], outerMsg[0]);
+            }
             else {
-               wrongFormatMessage(server, out);
+               wrongFormatMessage(server, out, outerMsg[0]);
                continue;
             }
-            if(id[0].equals(params[0]) && (params.length > 1)) { // Checks if it is the actual user
+            if(outerMsg[0].equals(decMsg[0]) && (decMsg.length > 1)) { // Checks if it is the actual user
                
-               if(params[1].equals("REG")) { // Checks what action this message performs
-                  if(params.length == 4) { // Checks if the  
-                     if((validNounce(params[2], utils.getTimeStamp())) 
-                        && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(params[3]))) {
+               if(decMsg[1].equals("REG")) { // Checks what action this message performs
+                  System.out.println(outerMsg[0] + " wishes to register its address with the server...");
+                  if(decMsg.length == 4) { // Checks if the  
+                     if((validNonce(decMsg[2], utils.getTimeStamp())) 
+                        && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(decMsg[3]))) {
                         //If we reach this point is because everything checks out, so the registration is successful
-                        addressesMap.put(id[0], remoteAddr.toString());
-                        noncesMap.put(params[2], utils.getTimeStamp());
+                        addressesMap.put(outerMsg[0], remoteAddr.toString());
+                        noncesMap.put(decMsg[2], utils.getTimeStamp());
                         String serverNonce = utils.generateRandomNonce();
-                        //TODO: encrypt part of the message after ":"
-                        sendMessage(out, "Server,ACKREG," + id[0] + "," + remoteAddr.toString() + "," + params[2] + "," + serverNonce + "," + utils.getTimeStamp());
+                        System.out.println(outerMsg[0]+" registered successfully with address " + remoteAddr);
+                        out.writeUTF(encryptAndComposeMsg("Server,ACKREG,"+outerMsg[0]+","+remoteAddr.toString()+","+serverNonce+","+utils.getTimeStamp(), outerMsg[0]));
+                        server.close();
+                        continue;
                         
                      }
                      else {
-                        expiredMessage(server, out);
+                        expiredMessage(server, out, outerMsg[0]);
                         continue;   
                      }
                   }
                   else {
-                     wrongFormatMessage(server, out);
+                     wrongFormatMessage(server, out, outerMsg[0]);
                      continue;
                   }
                }
-               else if(params[1].equals("ERROR") && (params.length==3)) { // If an error message is received from the client
-                  System.out.println("Client says: " + params[2]);
-                  server.close();
-                  continue;
+               else if(decMsg[1].equals("REQ")) { // Checks what action this message performs
+                  if(decMsg.length == 5) { // Checks if the
+                     System.out.print(outerMsg[0] + " wishes to schedule a meeting with " + decMsg[2]);
+                     if((validNonce(decMsg[3], utils.getTimeStamp())) 
+                        && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(decMsg[4]))) {
+                        //If we reach this point is because everything checks out, so the server notifies the other user of the schedule request
+                        String serverNonce = utils.generateRandomNonce();
+                        out.writeUTF(encryptAndComposeMsg("Server,REQ,"+outerMsg[0]+","+serverNonce+","+utils.getTimeStamp(), decMsg[2]));
+                        server.close();
+                        System.out.println("Scheduling request from " + outerMsg[0] + " successfully sent to " + decMsg[2]);
+                        
+                        String responseMsg = in.readUTF();
+
+
+                        continue;
+                        
+                     }
+                     else {
+                        expiredMessage(server, out, outerMsg[0]);
+                        continue;   
+                     }
+                  }
+                  else {
+                     wrongFormatMessage(server, out, outerMsg[0]);
+                     continue;
+                  }
+               }
+
+               else if(decMsg[1].equals("ERROR") && (decMsg.length==3)) { // If an error message is received from the client
+                  //TODO
+                  // System.out.println("Client says: " + decMsg[2]);
+                  // server.close();
+                  // continue;
                }
 
             }
 
             else {
-               wrongCredentialsProvided(server, out);
+               wrongCredentialsProvided(server, out, outerMsg[0]);
                continue;
             }
+
             server.close();
          }catch(SocketTimeoutException s)
          {
@@ -156,6 +196,8 @@ public class Server extends Thread
          {
             e.printStackTrace();
             break;
+         }catch(Exception e){
+            e.printStackTrace();
          }
       }
    }

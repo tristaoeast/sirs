@@ -15,6 +15,8 @@ import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import javax.crypto.IllegalBlockSizeException;
+import java.security.InvalidKeyException;
  
 public class AES {
   
@@ -120,7 +122,7 @@ public class AES {
     return cipher.doFinal(plainText.getBytes("UTF-8"));
   }
  
-  public String decrypt(byte[] cipherText, byte[] encryptionKey, String iv) throws Exception{
+  public String decrypt(byte[] cipherText, byte[] encryptionKey, String iv) throws Exception {
     Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
     SecretKeySpec key = new SecretKeySpec(encryptionKey, "AES");
     cipher.init(Cipher.DECRYPT_MODE, key,new IvParameterSpec(iv.getBytes("UTF-8")));
@@ -141,7 +143,7 @@ public class AES {
       aes.writeKeyToFile(secretKeyAlice,"AliceKeyStore");
       byte[] temp = aes.readKeyFromFile("BobKeyStore");
       byte[] ciphertext = aes.encrypt(ptext, secretKeyBob, iv);
-      String deciphertext = aes.decrypt(ciphertext,temp,iv);
+      String deciphertext = aes.decrypt(utils.stringToByteArray(utils.byteArrayToString(ciphertext)),temp,iv);
       System.out.println(deciphertext);
 
 
