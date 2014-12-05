@@ -138,6 +138,7 @@ public class AES {
       byte[] secretKeyBob = aes.secretKeyToByteArray(aes.generateSecretKey());
       System.out.println(secretKeyBob.length);
       aes.writeKeyToFile(secretKeyBob,"BobKeyStore");
+      aes.writeKeyToFile(secretKeyAlice,"AliceKeyStore");
       byte[] temp = aes.readKeyFromFile("BobKeyStore");
       byte[] ciphertext = aes.encrypt(ptext, secretKeyBob, iv);
       String deciphertext = aes.decrypt(ciphertext,temp,iv);
