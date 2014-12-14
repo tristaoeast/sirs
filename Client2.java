@@ -90,7 +90,7 @@ public class Client2
 				maux2 = decryptAndSplitMsg(maux1[1], maux1[2], "Bob");
 			}
 			else{
-				String decryptedMsg = aes.decrypt(DatatypeConverter.parseBase64Binary(maux1[1]), utils.stringToByteArray(_sharedKey.toString()), maux1[2]);
+				String decryptedMsg = aes.decrypt(DatatypeConverter.parseBase64Binary(maux1[1]), DatatypeConverter.parseBase64Binary(_sharedKey.toString()), maux1[2]);
 				maux2 = decryptedMsg.split(",");
 			}
 		}
@@ -246,12 +246,12 @@ public class Client2
 
 							String msg = "Bob,CHECK,No," + utils.generateRandomNonce()+"," + String.valueOf(System.currentTimeMillis());
 							String iv = utils.generateRandomIV();
-							out.writeUTF("Bob:" + utils.byteArrayToString(aes.encrypt(msg, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
+							out.writeUTF("Bob:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKey.toString()), iv)) + ":" + iv);
 						}
 						else {
 							String msg = "Bob,CHECK,Yes," + utils.generateRandomNonce()+"," + String.valueOf(System.currentTimeMillis());
 							String iv = utils.generateRandomIV();
-							out.writeUTF("Bob:" + utils.byteArrayToString(aes.encrypt(msg, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
+							out.writeUTF("Bob:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKey.toString()), iv)) + ":" + iv);
 						}
 					}
 					else{ break;}
@@ -381,7 +381,7 @@ public class Client2
 				Nb = utils.generateRandomNonce();
 				message = "Alice,DH,Bob," + "," + parsedMsg[4] + "," + Nb + "," + String.valueOf(System.currentTimeMillis());
 				iv = utils.generateRandomIV();
-				out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, utils.stringToByteArray(_sharedKey.toString()), iv)) + ":" + iv);
+				out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, DatatypeConverter.parseBase64Binary(_sharedKey.toString()), iv)) + ":" + iv);
 			}
 			else{
 				socketClient.close();
