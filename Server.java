@@ -6,6 +6,7 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import javax.xml.bind.DatatypeConverter;
 
 public class Server extends Thread
 {
@@ -83,7 +84,7 @@ public class Server extends Thread
    {
       AES aes = new AES();
       Utils utils = new Utils();
-      String decipheredText = aes.decrypt(utils.stringToByteArray(cipheredMsg), aes.readKeyFromFile(username + "KeyStore"), iv);
+      String decipheredText = aes.decrypt(DatatypeConverter.parseBase64Binary(cipheredMsg), aes.readKeyFromFile(username + "KeyStore"), iv);
       String[] decMsg = decipheredText.split(",");
       return decMsg;
    }
@@ -94,7 +95,7 @@ public class Server extends Thread
       Utils utils = new Utils();
       String iv = utils.generateRandomIV();
       byte[] cipheredMsg = aes.encrypt(plaintext, aes.readKeyFromFile(username + "KeyStore"), iv);
-      return "Server:" + utils.byteArrayToString(cipheredMsg) + ":" + iv;
+      return "Server:" + DatatypeConverter.printBase64Binary(cipheredMsg) + ":" + iv;
    }
 
 	public String deparseMessage(String[] message){

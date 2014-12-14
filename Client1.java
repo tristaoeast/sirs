@@ -12,6 +12,7 @@ import java.security.NoSuchProviderException;
 import java.security.*;
 import javax.crypto.*;
 import java.util.GregorianCalendar;
+import javax.xml.bind.DatatypeConverter;
 
 public class Client1
 {
@@ -460,14 +461,14 @@ public class Client1
       String iv = utils.generateRandomIV();
       // System.out.println("ENTREI!!");
       byte[] cipheredMsg = aes.encrypt(plaintext, aes.readKeyFromFile(username + "KeyStore"), iv);
-      return "Alice:" + utils.byteArrayToString(cipheredMsg) + ":" + iv;
+      return "Alice:" + DatatypeConverter.printBase64Binary(cipheredMsg) + ":" + iv;
    	}
 
    	public String[] decryptAndSplitMsg(String cipheredMsg, String iv, String username) throws IllegalBlockSizeException,InvalidKeyException,NoSuchAlgorithmException,NoSuchPaddingException,InvalidAlgorithmParameterException,BadPaddingException,IOException,FileNotFoundException,UnsupportedEncodingException
    	{
    		AES aes = new AES();
    		Utils utils = new Utils();
-      String decipheredText = aes.decrypt(utils.stringToByteArray(cipheredMsg), aes.readKeyFromFile(username + "KeyStore"), iv);
+      String decipheredText = aes.decrypt(DatatypeConverter.parseBase64Binary(cipheredMsg), aes.readKeyFromFile(username + "KeyStore"), iv);
       String[] decMsg = decipheredText.split(",");
       return decMsg;
    	}
@@ -636,7 +637,7 @@ public class Client1
       	}
 
 
-      	authenticateUser(correctHash);
+      	// authenticateUser(correctHash);
 
       	// String input = "";
       	// while(!input.equals("y")){

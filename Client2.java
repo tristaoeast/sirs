@@ -10,6 +10,7 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 import javax.crypto.*;
 import java.security.*;
+import javax.xml.bind.DatatypeConverter;
 
 public class Client2
 {
@@ -315,14 +316,14 @@ public class Client2
       String iv = utils.generateRandomIV();
       // System.out.println("ENTREI!!");
       byte[] cipheredMsg = aes.encrypt(plaintext, aes.readKeyFromFile(username + "KeyStore"), iv);
-      return "Bob:" + utils.byteArrayToString(cipheredMsg) + ":" + iv;
+      return "Bob:" + DatatypeConverter.printBase64Binary(cipheredMsg) + ":" + iv;
    	}
 
    	public String[] decryptAndSplitMsg(String cipheredMsg, String iv, String username) throws IllegalBlockSizeException,InvalidKeyException,NoSuchAlgorithmException,NoSuchPaddingException,InvalidAlgorithmParameterException,BadPaddingException,IOException,FileNotFoundException,UnsupportedEncodingException
    	{
    		AES aes = new AES();
    		Utils utils = new Utils();
-      String decipheredText = aes.decrypt(utils.stringToByteArray(cipheredMsg), aes.readKeyFromFile(username + "KeyStore"), iv);
+      String decipheredText = aes.decrypt(DatatypeConverter.parseBase64Binary(cipheredMsg), aes.readKeyFromFile(username + "KeyStore"), iv);
       String[] decMsg = decipheredText.split(",");
       return decMsg;
    	}
@@ -557,7 +558,7 @@ public class Client2
 		
 			bob = new Client2(localPort, serverName, port);
 
-		    authenticateUser(correctHash);
+		    // authenticateUser(correctHash);
 
 		     // String input = "";
 	      // 	while(!input.equals("y")){
