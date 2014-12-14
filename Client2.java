@@ -96,6 +96,7 @@ public class Client2
 		}
 		else{
 			wrongFormatMessage(socketClient, out);
+		    System.out.println("troll1\n");
 		}
 
 		if(maux1[0].equals(maux2[0]) && (maux2.length > 1)){
@@ -122,11 +123,12 @@ public class Client2
 				}
 				else{
 					wrongFormatMessage(socketClient, out);
+					System.out.println("troll2\n");
 				}
 			}
 			else if(maux2[1].equals("DH")){
 
-				if(maux2[1].equals("Server")){
+				if(maux2[0].equals("Server")){
 
 					if(maux2.length == 7){
 
@@ -169,6 +171,7 @@ public class Client2
 					}
 					else{
 						wrongFormatMessage(socketClient, out);
+						System.out.println("troll3\n");
 					}
 				}
 				else{
@@ -192,6 +195,7 @@ public class Client2
 					}
 					else{
 						wrongFormatMessage(socketClient, out);
+						System.out.println("troll4\n");
 					}
 				}
 			}
@@ -481,6 +485,7 @@ public class Client2
 		            else {
 		               String errorMessage = "ERROR: Message with wrong format received. Aborting current connection...";
 		               System.out.println(errorMessage);
+		               System.out.println("troll5\n");
 		               socketClient.close();
 		               continue;
 		            }
