@@ -122,15 +122,15 @@ public class AES {
   public byte[] encrypt(String plainText, byte[] encryptionKey, String iv) throws BadPaddingException,InvalidAlgorithmParameterException,NoSuchPaddingException,NoSuchAlgorithmException,UnsupportedEncodingException,InvalidKeyException,IllegalBlockSizeException {
     Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
     SecretKeySpec key = new SecretKeySpec(encryptionKey, "AES");
-    cipher.init(Cipher.ENCRYPT_MODE, key,new IvParameterSpec(iv.getBytes("ISO-8859-1")));
-    return cipher.doFinal(plainText.getBytes("ISO-8859-1"));
+    cipher.init(Cipher.ENCRYPT_MODE, key,new IvParameterSpec(iv.getBytes("UTF-8")));
+    return cipher.doFinal(plainText.getBytes("UTF-8"));
   }
  
   public String decrypt(byte[] cipherText, byte[] encryptionKey, String iv) throws BadPaddingException,InvalidAlgorithmParameterException,NoSuchPaddingException,NoSuchAlgorithmException,UnsupportedEncodingException,InvalidKeyException,IllegalBlockSizeException {
     Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
     SecretKeySpec key = new SecretKeySpec(encryptionKey, "AES");
-    cipher.init(Cipher.DECRYPT_MODE, key,new IvParameterSpec(iv.getBytes("ISO-8859-1")));
-    return new String(cipher.doFinal(cipherText),"ISO-8859-1");
+    cipher.init(Cipher.DECRYPT_MODE, key,new IvParameterSpec(iv.getBytes("UTF-8")));
+    return new String(cipher.doFinal(cipherText),"UTF-8");
   }
 
   public static void main(String [] args) {

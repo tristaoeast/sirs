@@ -85,8 +85,9 @@ public class Client2
 
 			if(maux1[0].equals("Server")){
 
-				String decryptedMsg = aes.decrypt(utils.stringToByteArray(maux1[1]), aes.readKeyFromFile("BobKeyStore"), maux1[2]);
-				maux2 = decryptedMsg.split(",");
+				// String decryptedMsg = aes.decrypt(DatatypeConverter.printBase64Binary(maux1[1]), aes.readKeyFromFile("BobKeyStore"), maux1[2]);
+				// maux2 = decryptedMsg.split(",");
+				maux2 = decryptAndSplitMsg(maux1[1], maux1[2], "Bob");
 			}
 			else{
 				String decryptedMsg = aes.decrypt(utils.stringToByteArray(maux1[1]), utils.stringToByteArray(_sharedKey.toString()), maux1[2]);
@@ -475,7 +476,7 @@ public class Client2
 		            String[] outerMsg = inMsg.split(":");
 		            String[] decMsg = null;
 		            if(outerMsg.length == 3){
-		               decMsg = decryptAndSplitMsg(outerMsg[1], outerMsg[2], "Alice");
+		               decMsg = decryptAndSplitMsg(outerMsg[1], outerMsg[2], "Bob");
 		            }
 		            else {
 		               String errorMessage = "ERROR: Message with wrong format received. Aborting current connection...";
