@@ -68,11 +68,12 @@ public class Client1
 
 			if(maux1[0].equals("Server")){
 
-				String decryptedMsg = aes.decrypt(utils.stringToByteArray(maux1[1]), aes.readKeyFromFile("AliceKeyStore"), maux1[2]);
-				maux2 = decryptedMsg.split(",");
+				// String decryptedMsg = aes.decrypt(utils.stringToByteArray(maux1[1]), aes.readKeyFromFile("AliceKeyStore"), maux1[2]);
+				// maux2 = decryptedMsg.split(",");
+				maux2 = decryptAndSplitMsg(maux1[1], maux1[2], "Alice");
 			}
 			else{
-				String decryptedMsg = aes.decrypt(utils.stringToByteArray(maux1[1]), utils.stringToByteArray(_sharedKey.toString()), maux1[2]);
+				String decryptedMsg = aes.decrypt(DatatypeConverter.parseBase64Binary(maux1[1]), utils.stringToByteArray(_sharedKey.toString()), maux1[2]);
 				maux2 = decryptedMsg.split(",");
 			}
 		}
