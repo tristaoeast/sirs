@@ -217,7 +217,9 @@ public class Server extends Thread {
                                                 outToBob.writeUTF(encryptAndComposeMsg("Server,DH,Alice," + p.toString() + "," + g.toString() + "," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis()), "Bob"));
 
                                                 String aInMsg = in.readUTF();
+                                                System.out.println("DHValuesC1");
                                                 String bInMsg = inFromBob.readUTF();
+                                                System.out.println("DHValuesC2");
                                                 String[] aOuterMsg = aInMsg.split(":");
                                                 String[] bOuterMsg = bInMsg.split(":");
                                                 String[] aDecMsg = null, bDecMsg = null;
@@ -233,8 +235,9 @@ public class Server extends Thread {
                                                     continue;
                                                 }
                                                 if ((aOuterMsg[0].equals(aDecMsg[0]) && (aDecMsg.length > 1)) && (bOuterMsg[0].equals(bDecMsg[0]) && (bDecMsg.length > 1))) {
-
-                                                    if (aDecMsg[1].equals("DH") && bDecMsg[1].equals("DH")) {
+                                                    System.out.println(aDecMsg[1] + "=" + bDecMsg[1]);
+                                                    System.out.println((aDecMsg[1].equals("DH")));
+                                                    if (!(aDecMsg[1].equals("DH")) && (bDecMsg[1].equals("DH"))) {
 
                                                         if (aDecMsg.length == 6 && bDecMsg.length == 6) {
                                                             System.out.println(aOuterMsg[0] + " sent DH response " + aDecMsg[aDecMsg.length - 3] + " and " + aOuterMsg[0] + " sent DH response " + bDecMsg[bDecMsg.length - 3]);
@@ -255,6 +258,7 @@ public class Server extends Thread {
                                                             continue;
                                                         }
                                                     } else {
+                                                        System.out.println(aDecMsg[1] + "=" + bDecMsg[1]);
                                                         wrongFormatMessage(server, out, aOuterMsg[0]);
                                                         wrongFormatMessage(server, out, bOuterMsg[0]);
                                                         continue;

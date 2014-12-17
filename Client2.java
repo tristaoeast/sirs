@@ -357,11 +357,13 @@ public class Client2
 				message = "Bob,DH,Alice," + B.toString() + "," + utils.generateRandomNonce()+"," + String.valueOf(System.currentTimeMillis());
 				iv = utils.generateRandomIV();
 				out.writeUTF("Bob:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, aes.readKeyFromFile("BobKeyStore"), iv)) + ":" + iv);
+				System.out.println("DHC1:1");
 			}
 			else{
 				System.out.println("banana");
 				socketClient.close();
 			}
+			System.out.println("DHC1:2");
 			message = in.readUTF();
 			parsedMsg = parseMessage(message, socketClient, out);
 			
@@ -372,8 +374,9 @@ public class Client2
 			else{
 				socketClient.close();
 			}
-
+			
 			message = in.readUTF();
+			System.out.println("DHC1:3");
 			parsedMsg = parseMessage(message, socketClient, out);
 
 			if(!(parsedMsg == null)){

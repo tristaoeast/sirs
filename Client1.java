@@ -78,6 +78,7 @@ public class Client1
 			}
 		}
 		else{
+			System.out.println("ParseC1:1");
 			wrongFormatMessage(socketClient, out);
 			return parsedMsg;
 		}
@@ -105,6 +106,7 @@ public class Client1
 					}
 				}
 				else{
+					System.out.println("ParseC1:2");
 					wrongFormatMessage(socketClient, out);
 				}
 			}
@@ -152,6 +154,7 @@ public class Client1
 						}
 					}
 					else{
+						System.out.println("ParseC1:3");
 						wrongFormatMessage(socketClient, out);
 					}
 				}
@@ -174,6 +177,7 @@ public class Client1
 						}
 					}
 					else{
+						System.out.println("ParseC1:4");
 						wrongFormatMessage(socketClient, out);
 					}
 				}
@@ -343,13 +347,14 @@ public class Client1
 		socketClient.close();
 	}
 
-	public void createDHPublicValues(Socket socketClient, DataOutputStream out, DataInputStream in){
+	public void createDHPublicValues(Socket socketCl, DataOutputStream outsrv, DataInputStream insrv){
 
 		try{
+			Socket socketClient = socketCl;
 			AES aes = new AES();
 			Utils utils = new Utils();
 			String iv;
-			String message = in.readUTF();
+			String message = insrv.readUTF();
 			String[] parsedMsg = null;
 			BigInteger x = null, A, p = null, g, B;
 			int bitLength = 1024; // 1024 bits
@@ -357,7 +362,7 @@ public class Client1
 			String Na = null;
 		
 			
-			parsedMsg = parseMessage(message, socketClient, out);
+			parsedMsg = parseMessage(message, socketClient, outsrv);
 
 			if(!(parsedMsg == null)){
 				x = BigInteger.probablePrime(bitLength, rnd);
@@ -367,13 +372,21 @@ public class Client1
 
 				message = "Alice, DH, Bob," + A.toString() + "," + utils.generateRandomNonce()+"," + String.valueOf(System.currentTimeMillis());
 				iv = utils.generateRandomIV();
-				out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, aes.readKeyFromFile("AliceKeyStore"), iv)) + ":" + iv);
+				outsrv.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, aes.readKeyFromFile("AliceKeyStore"), iv)) + ":" + iv);
+				System.out.println("DHC1:1");
 			}
 			else{
 				socketClient.close();
 			}
 
-			message = in.readUTF();
+			message = insrv.readUTF();
+			socketClient.close();
+			socketClient = new Socket("localhost", 8081);
+			OutputStream outToServer = socketClient.getOutputStream();
+			DataOutputStream out = new DataOutputStream(outToServer);
+			InputStream inFromServer = socketClient.getInputStream();
+			DataInputStream in = new DataInputStream(inFromServer);
+			System.out.println("DHC1:2");
 			parsedMsg = parseMessage(message, socketClient, out);
 			
 			if(!(parsedMsg == null)){
@@ -390,6 +403,7 @@ public class Client1
 			}
 
 			message = in.readUTF();
+			System.out.println("DHC1:3");
 			parsedMsg = parseMessage(message, socketClient, out);
 
 			if(!(parsedMsg == null)){
@@ -562,7 +576,7 @@ public class Client1
 		        	if((validNonce(decMsg[decMsg.length-2], utils.getTimeStamp())) 
                         && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(decMsg[decMsg.length-1]))){
 			       		System.out.println("Meeting scheduling accepted by Bob");
-			        	socketClient.close();
+			        	createDHPublicValues(socketClient, out, in);
 			        	return true;
 			        }
 		        	
