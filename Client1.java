@@ -212,17 +212,12 @@ public class Client1 {
             // dateInterval = parseDateInput(getInput());
             dateInterval = parseDateInput("12/12-13/12");
             lastCheckedDay = dateInterval[0];
-            System.out.println("LCD: " + lastCheckedDay);
             lastCheckedMonth = dateInterval[1];
-            System.out.println("LCM: " + lastCheckedMonth);
-            System.out.println("di3: " + dateInterval[3]);
 
-            while (lastCheckedMonth != dateInterval[3]) {
-                System.out.println("ENTREI1");
-                while (lastCheckedDay < 32) {
-                    System.out.println("ENTREI1:1");
+            loop11: while (lastCheckedMonth != dateInterval[3]) {
+                loop12: while (lastCheckedDay < 32) {
                     int i = 0;
-                    while (i < 24) {
+                    loop13: while (i < 24) {
 
                         if (_calendar[lastCheckedMonth][lastCheckedDay][i] != 0) {
                             i++;
@@ -231,65 +226,70 @@ public class Client1 {
                             String iv = utils.generateRandomIV();
                             // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
                             out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, _sharedKey, iv)) + ":" + iv);
+                            System.out.println("Checking date: " + lastCheckedDay + "/" + lastCheckedMonth + "/14 - " + i + "h");
                         }
                         message = in.readUTF();
                         parsedMsg = parseMessage(message, socketClient, out);
                         if (!(parsedMsg == null)) {
 
                             if (parsedMsg[3].equals("Yes")) {
-                                break;
+                                System.out.println("Found common date! Meeting with Bob scheduled to " + lastCheckedDay + "/" + lastCheckedMonth + "/14 at " + i + " hours.");
+                                _calendar[lastCheckedMonth][lastCheckedDay][i] = 1;
+                                return;
                             }
                         } else {
                             socketClient.close();
                         }
                     }
                     if (parsedMsg[3].equals("Yes")) {
-                        break;
+                        System.out.println("Found common date! Meeting with Bob scheduled to " + lastCheckedDay + "/" + lastCheckedMonth + "/14 at " + i + " hours.");
+                        _calendar[lastCheckedMonth][lastCheckedDay][i] = 1;
+                        return;
                     }
                     lastCheckedDay++;
                 }
                 if (parsedMsg[3].equals("Yes")) {
-                    break;
+                    // System.out.println("Found common date! Meeting with Bob scheduled to " + lastCheckedDay + "/" + lastCheckedMonth + "/14 at " + i + " hours.");
+                    return;
                 }
                 lastCheckedDay = 1;
                 lastCheckedMonth++;
             }
             if (lastCheckedMonth == dateInterval[3] && !message.equals("Yes")) {
-                System.out.println("ENTREI2");
-                while (lastCheckedDay <= dateInterval[2]) {
-                    System.out.println("ENTREI2:1");
-
-                    int i = 0;
-                    while (i < 24) {
-                        System.out.println(i);
+                loop21: while (lastCheckedDay <= dateInterval[2]) {
+                    int i = 8;
+                    loop22: while (i < 20) {
                         // System.out.println("LCD: " + lastCheckedDay + " " + lastCheckedMonth);
                         if (_calendar[lastCheckedMonth][lastCheckedDay][i] != 0) {
-                            System.out.println("ENTREI2:1:1");
                             i++;
                             break;
                         } else {
-                            System.out.println("ENTREI2:1:2");
                             String msg = "Alice,CHECK," + Integer.toString(lastCheckedDay) + "/" + Integer.toString(lastCheckedMonth) + "/14-" + Integer.toString(i) + "," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis());
                             String iv = utils.generateRandomIV();
                             // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
                             out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, _sharedKey, iv)) + ":" + iv);
+                            System.out.println("Checking date: " + lastCheckedDay + "/" + lastCheckedMonth + "/14 - " + i + "h");
                         }
                         message = in.readUTF();
                         parsedMsg = parseMessage(message, socketClient, out);
                         if (!(parsedMsg == null)) {
 
                             if (parsedMsg[3].equals("Yes")) {
-                                break;
+                                System.out.println("Found common date! Meeting with Bob scheduled to " + lastCheckedDay + "/" + lastCheckedMonth + "/14 at " + i + " hours.");
+                                _calendar[lastCheckedMonth][lastCheckedDay][i] = 1;
+                                return;
                             } else {
+                                System.out.println("BUSY");
                                 i++;
-                                break;
                             }
                         } else {
                             socketClient.close();
                         }
                     }
                     if (parsedMsg[3].equals("Yes")) {
-                        break;
+                        System.out.println("Found common date! Meeting with Bob scheduled to " + lastCheckedDay + "/" + lastCheckedMonth + "/14 at " + i + " hours.");
+                        _calendar[lastCheckedMonth][lastCheckedDay][i] = 1;
+                        return;
                     }
                     lastCheckedDay++;
                 }
@@ -431,6 +431,7 @@ public class Client1 {
                     out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, _sharedKey, iv)) + ":" + iv);
                     // System.out.println("AQUI VOU EU!!!");
                     findCommonDate(socketClient, out, in);
+                    socketClient.close();
                 }
 
                 else if (!(Na.equals(parsedMsg[3]))) {

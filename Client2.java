@@ -112,7 +112,6 @@ public class Client2 {
                         parsedMsg[4] = maux2[3];
                         parsedMsg[5] = maux2[4];
                         parsedMsg[6] = maux1[2];
-                        System.out.println("CHECK");
                         return parsedMsg;
                     } else {
                         expiredMessage(socketClient, out);
@@ -219,6 +218,7 @@ public class Client2 {
 
                 if (!(parsedMsg == null)) {
                     //System.out.println("Client1 says " + message);
+                    
 
                     int month = 0, day = 0, hour = 0;
                     String[] split1 = parsedMsg[3].split("-");
@@ -228,6 +228,8 @@ public class Client2 {
                     month = Integer.parseInt(split2[1]);
                     hour = Integer.parseInt(split1[1]);
 
+                    System.out.println("Checking date: "+day+"/"+month+"/14 - "+hour+"h");
+
                     if (!parsedMsg[3].equals("ack:yes")) {
                         if (!checkCalendarDate(month, day, hour)) {
 
@@ -235,11 +237,15 @@ public class Client2 {
                             String iv = utils.generateRandomIV();
                             // out.writeUTF("Bob:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
                             out.writeUTF("Bob:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, _sharedKey, iv)) + ":" + iv);
+                            System.out.println("BUSY");
                         } else {
                             String msg = "Bob,CHECK,Yes," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis());
                             String iv = utils.generateRandomIV();
                             // out.writeUTF("Bob:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
                             out.writeUTF("Bob:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, _sharedKey, iv)) + ":" + iv);
+                            _calendar[month][day][hour]=1;
+                            System.out.println("Found common date! Meeting with Alice scheduled  to " + day + "/" + month + "/14 at " + hour + " hours.");
+                            return;
                         }
                     } else {
                         break;
@@ -393,6 +399,7 @@ public class Client2 {
                 System.out.println("Challenge Successful.");
                 establishMeetingDate(socketAlice);
                 socketAlice.close();
+                return;
             }else if ((!(parsedMsg == null)) || (!Nb.equals(parsedMsg[4]))) {
                 System.out.println("Challenge unsuccessful.");
                 socketAlice.close();
@@ -594,7 +601,6 @@ public class Client2 {
                     in.readUTF();
                     out.writeUTF(bob.encryptAndComposeMsg("Bob,ACCEPT,Alice," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis()), "Bob"));
                     bob.createDHPublicValues(server, out, in);
-                    bob.establishMeetingDate(server);
                     continue loop;
                 } else if (response.equals("n")) {
                     DataOutputStream out = new DataOutputStream(server.getOutputStream());
