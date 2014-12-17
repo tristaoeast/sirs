@@ -424,7 +424,7 @@ public class Client2 {
         return server;
     }
 
-    private void registerWithServer(String serverName, int serverPort) {
+    private void registerWithServer(String serverName, int serverPort, int locaPort) {
         try {
             Utils utils = new Utils();
             // while(out == null)
@@ -434,7 +434,7 @@ public class Client2 {
                 Socket socketClient = new Socket(serverName, serverPort);
                 OutputStream outToServer = socketClient.getOutputStream();
                 DataOutputStream out = new DataOutputStream(outToServer);
-                String testMsg = encryptAndComposeMsg("Bob,REG," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis()), "Bob");
+                String testMsg = encryptAndComposeMsg("Bob,REG," + locaPort + "," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis()), "Bob");
                 // System.out.println(testMsg);
                 out.writeUTF(testMsg);
                 System.out.println("Sent registration to server. Awaiting response...");
@@ -523,7 +523,7 @@ public class Client2 {
         if (args.length != 3) {
             // System.err.println("Too few arguments. Run using Client1 [locaPort] [serverHostname] [serverPort]");
             // System.exit(-1);
-            localPort = 8081;
+            localPort = 8082;
             port = 8080;
             serverName = "localhost";
         } else {
@@ -535,7 +535,7 @@ public class Client2 {
         bob = null;
         try {
             bob = new Client2(localPort, serverName, port);
-            bob.registerWithServer(serverName, port);
+            bob.registerWithServer(serverName, port, localPort);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -560,6 +560,7 @@ public class Client2 {
                     in.readUTF();
                     out.writeUTF(bob.encryptAndComposeMsg("Bob,ACCEPT,Alice," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis()), "Bob"));
                     bob.createDHPublicValues(server, out, in);
+                    bob.establishMeetingDate(server);
                     continue loop;
                 } else if (response.equals("n")) {
                     DataOutputStream out = new DataOutputStream(server.getOutputStream());

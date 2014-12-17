@@ -136,16 +136,20 @@ public class Server extends Thread {
 
                     if (decMsg[1].equals("REG")) { // Checks what action this message performs
                         System.out.println(outerMsg[0] + " wishes to register its address with the server...");
-                        if (decMsg.length == 4) { // Checks if the
-                            if ((validNonce(decMsg[2], utils.getTimeStamp()))
-                                    && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(decMsg[3]))) {
+                        if (decMsg.length == 5) { // Checks if the
+                            if ((validNonce(decMsg[3], utils.getTimeStamp()))
+                                    && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(decMsg[4]))) {
                                 //If we reach this point is because everything checks out, so the registration is successful
                                 addressesMap.put(outerMsg[0], remoteAddr);
                                 noncesMap.put(decMsg[2], utils.getTimeStamp());
+                                portsMap.put(decMsg[0], Integer.parseInt(decMsg[2]));
+                                // System.out.println(portsMap.get("Bob"));
+                                // String testStr = decMsg[0] + " Port: " + portsMap.get(decMsg[0]);
+                                // System.out.println(testStr);
                                 String serverNonce = utils.generateRandomNonce();
                                 out.writeUTF(encryptAndComposeMsg("Server,ACKREG," + outerMsg[0] + "," + remoteAddr.toString() + "," + serverNonce + "," + String.valueOf(System.currentTimeMillis()), outerMsg[0]));
                                 server.close();
-                                System.out.println(outerMsg[0] + " registered successfully with address " + remoteAddr);
+                                System.out.println(outerMsg[0] + " registered successfully!");
                                 continue;
 
                             } else {
