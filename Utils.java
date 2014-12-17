@@ -1,6 +1,7 @@
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
+import java.security.MessageDigest;
 import java.math.BigInteger;
 import java.util.GregorianCalendar;
 import java.io.UnsupportedEncodingException;
@@ -56,6 +57,15 @@ public class Utils
         sr.nextBytes(iv);
         //return iv
         return toHex(iv);
+    }
+
+    public byte[] getSHA256(BigInteger bi) {
+        MessageDigest sha256 = null;
+        try{
+            sha256 = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {e.printStackTrace();}
+        byte[] hash = sha256.digest(bi.toByteArray());
+        return hash;
     }
 
     public String byteArrayToString(byte[] arr) throws UnsupportedEncodingException{

@@ -18,7 +18,8 @@ import javax.xml.bind.DatatypeConverter;
 public class Client1 {
     private int _calendar[][][];
     //private DiffieHellman _dh;
-    private BigInteger _sharedKey;
+    private BigInteger _sharedKeyBI;
+    private byte[] _sharedKey;
     private TreeMap<String, Long> noncesMap;
     private AES aes;
     private Utils utils;
@@ -70,7 +71,8 @@ public class Client1 {
                 // maux2 = decryptedMsg.split(",");
                 maux2 = decryptAndSplitMsg(maux1[1], maux1[2], "Alice");
             } else {
-                String decryptedMsg = aes.decrypt(DatatypeConverter.parseBase64Binary(maux1[1]), DatatypeConverter.parseBase64Binary(_sharedKey.toString()), maux1[2]);
+                // String decryptedMsg = aes.decrypt(DatatypeConverter.parseBase64Binary(maux1[1]), DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), maux1[2]);
+                String decryptedMsg = aes.decrypt(DatatypeConverter.parseBase64Binary(maux1[1]), _sharedKey, maux1[2]);
                 maux2 = decryptedMsg.split(",");
             }
         } else {
@@ -220,7 +222,8 @@ public class Client1 {
                         } else {
                             String msg = "Alice,CHECK," + Integer.toString(lastCheckedDay) + "/" + Integer.toString(lastCheckedMonth) + "/14-" + Integer.toString(i) + "," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis());
                             String iv = utils.generateRandomIV();
-                            out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKey.toString()), iv)) + ":" + iv);
+                            // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
+                            out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, _sharedKey, iv)) + ":" + iv);
                         }
                         message = in.readUTF();
                         parsedMsg = parseMessage(message, socketClient, out);
@@ -256,7 +259,8 @@ public class Client1 {
                         } else {
                             String msg = "Alice,CHECK," + Integer.toString(lastCheckedDay) + "/" + Integer.toString(lastCheckedMonth) + "/14-" + Integer.toString(i) + "," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis());
                             String iv = utils.generateRandomIV();
-                            out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKey.toString()), iv)) + ":" + iv);
+                            // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
+                            out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, _sharedKey, iv)) + ":" + iv);
                         }
                         message = in.readUTF();
                         parsedMsg = parseMessage(message, socketClient, out);
@@ -280,7 +284,8 @@ public class Client1 {
                 System.out.println("Unable to find common date.");
                 String msg = "Alice,NODATE,No common date found," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis());
                 String iv = utils.generateRandomIV();
-                out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKey.toString()), iv)) + ":" + iv);
+                // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
+                out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, _sharedKey, iv)) + ":" + iv);
             }
             //socketClient.close();
         } catch (IOException e) {
@@ -380,12 +385,14 @@ public class Client1 {
 
             if (!(parsedMsg == null)) {
                 B = new BigInteger(parsedMsg[4]);
-                _sharedKey = B.modPow(x, p);
+                _sharedKeyBI = B.modPow(x, p);
+                _sharedKey = utils.getSHA256(_sharedKeyBI);
 
                 Na = utils.generateRandomNonce();
                 message = "Alice,DH,Bob," + "," + Na + "," + String.valueOf(System.currentTimeMillis());
                 iv = utils.generateRandomIV();
-                out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, DatatypeConverter.parseBase64Binary(_sharedKey.toString()), iv)) + ":" + iv);
+                // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
+                out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, _sharedKey, iv)) + ":" + iv);
             } else {
                 socketClient.close();
             }
@@ -402,7 +409,8 @@ public class Client1 {
 
                 message = "Alice,DH,Bob," + "," + parsedMsg[5] + "," + String.valueOf(System.currentTimeMillis());
                 iv = utils.generateRandomIV();
-                out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, DatatypeConverter.parseBase64Binary(_sharedKey.toString()), iv)) + ":" + iv);
+                // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
+                out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, _sharedKey, iv)) + ":" + iv);
             } else {
                 socketClient.close();
             }
