@@ -164,10 +164,11 @@ public class Client2 {
                         System.out.println("troll3\n");
                     }
                 } else {
+                	System.out.println(maux2[0]+","+maux2[1]+","+maux2[2]+","+maux2[3]+","+maux2[4]+","+maux2[5]);
                     if (maux2.length == 5) {
-
+                    	System.out.println("ENTREI1");
                         if (validNonce(maux2[3], utils.getTimeStamp()) && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(maux2[4]))) {
-
+                        	System.out.println("ENTREI2");
                             parsedMsg = new String[7];
                             parsedMsg[0] = maux1[0];
                             parsedMsg[1] = maux2[0];
@@ -348,34 +349,42 @@ public class Client2 {
             parsedMsg = parseMessage(message, socketClient, out);
 
             if (!(parsedMsg == null)) {
+            	System.out.println("DHC1:2:1");
                 A = new BigInteger(parsedMsg[4]);
-                _sharedKeyBI = B.modPow(x, p);
+                _sharedKeyBI = A.modPow(x, p);
+                System.out.println(_sharedKeyBI);
                 _sharedKey = utils.getSHA256(_sharedKeyBI);
             } else {
                 socketClient.close();
             }
+            socketClient.close(); //Closes connection with server
 
-            message = in.readUTF();
+            Socket socketAlice = waitConnection();
+            DataOutputStream outToAlice = new  DataOutputStream(socketAlice.getOutputStream());
+            DataInputStream inFromAlice = new  DataInputStream(socketAlice.getInputStream());
+
+            message = inFromAlice.readUTF();
             System.out.println("DHC1:3");
-            parsedMsg = parseMessage(message, socketClient, out);
+            parsedMsg = parseMessage(message, socketAlice, outToAlice);
 
             if (!(parsedMsg == null)) {
-
+            	System.out.println("ENTREI");
                 Nb = utils.generateRandomNonce();
                 message = "Alice,DH,Bob," + "," + parsedMsg[4] + "," + Nb + "," + String.valueOf(System.currentTimeMillis());
                 iv = utils.generateRandomIV();
                 // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
-                out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, _sharedKey, iv)) + ":" + iv);
+                System.out.println(iv.length());
+                outToAlice.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, _sharedKey, iv)) + ":" + iv);
             } else {
-                socketClient.close();
+                socketAlice.close();
             }
 
-            message = in.readUTF();
+            message = inFromAlice.readUTF();
             parsedMsg = parseMessage(message, socketClient, out);
 
             if ((!(parsedMsg == null)) || (!Nb.equals(parsedMsg[4]))) {
 
-                socketClient.close();
+                socketAlice.close();
             }
 
         } catch (IOException e) {

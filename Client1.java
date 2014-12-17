@@ -72,6 +72,7 @@ public class Client1 {
                 maux2 = decryptAndSplitMsg(maux1[1], maux1[2], "Alice");
             } else {
                 // String decryptedMsg = aes.decrypt(DatatypeConverter.parseBase64Binary(maux1[1]), DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), maux1[2]);
+                System.out.println(maux1[2].length());
                 String decryptedMsg = aes.decrypt(DatatypeConverter.parseBase64Binary(maux1[1]), _sharedKey, maux1[2]);
                 maux2 = decryptedMsg.split(",");
             }
@@ -386,13 +387,15 @@ public class Client1 {
             if (!(parsedMsg == null)) {
                 B = new BigInteger(parsedMsg[4]);
                 _sharedKeyBI = B.modPow(x, p);
+                System.out.println(_sharedKeyBI);
                 _sharedKey = utils.getSHA256(_sharedKeyBI);
 
                 Na = utils.generateRandomNonce();
-                message = "Alice,DH,Bob," + "," + Na + "," + String.valueOf(System.currentTimeMillis());
+                message = "Alice,DH,Bob," + Na + "," + String.valueOf(System.currentTimeMillis());
                 iv = utils.generateRandomIV();
                 // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
                 out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, _sharedKey, iv)) + ":" + iv);
+                System.out.println(aes.decrypt(aes.encrypt(message,_sharedKey,iv),_sharedKey,iv));
             } else {
                 socketClient.close();
             }

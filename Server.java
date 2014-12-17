@@ -216,9 +216,11 @@ public class Server extends Thread {
                                                 SecureRandom rnd = new SecureRandom();
                                                 BigInteger p = BigInteger.probablePrime(bitLength, rnd);
                                                 BigInteger g = BigInteger.probablePrime(bitLength, rnd);
+                                                String pStr = p.toString();
+                                                String gStr = g.toString();
 
-                                                out.writeUTF(encryptAndComposeMsg("Server,DH,Bob," + p.toString() + "," + g.toString() + "," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis()), "Alice"));
-                                                outToBob.writeUTF(encryptAndComposeMsg("Server,DH,Alice," + p.toString() + "," + g.toString() + "," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis()), "Bob"));
+                                                out.writeUTF(encryptAndComposeMsg("Server,DH,Bob," + pStr + "," + gStr + "," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis()), "Alice"));
+                                                outToBob.writeUTF(encryptAndComposeMsg("Server,DH,Alice," + pStr + "," + gStr + "," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis()), "Bob"));
 
                                                 String aInMsg = in.readUTF();
                                                 System.out.println("DHValuesC1");
