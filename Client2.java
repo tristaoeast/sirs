@@ -25,6 +25,7 @@ public class Client2 {
     private ServerSocket serverSocket;
     private String _serverName;
     private int _serverPort;
+    // public static dbug = false;
 
     public Client2(int localPort, String serverName, int serverPort) throws IOException, SocketException {
 
@@ -164,11 +165,11 @@ public class Client2 {
                         System.out.println("troll3\n");
                     }
                 } else {
-                	System.out.println(maux2.length);
+                    System.out.println(maux2.length);
                     if (maux2.length == 5) {
-                    	// System.out.println("ENTREI1");
+                        // System.out.println("ENTREI1");
                         if (validNonce(maux2[3], utils.getTimeStamp()) && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(maux2[4]))) {
-                        	// System.out.println("ENTREI2");
+                            // System.out.println("ENTREI2");
                             parsedMsg = new String[7];
                             parsedMsg[0] = maux1[0];
                             parsedMsg[1] = maux2[0];
@@ -218,7 +219,7 @@ public class Client2 {
 
                 if (!(parsedMsg == null)) {
                     //System.out.println("Client1 says " + message);
-                    
+
 
                     int month = 0, day = 0, hour = 0;
                     String[] split1 = parsedMsg[3].split("-");
@@ -228,7 +229,7 @@ public class Client2 {
                     month = Integer.parseInt(split2[1]);
                     hour = Integer.parseInt(split1[1]);
 
-                    System.out.println("Checking date: "+day+"/"+month+"/14 - "+hour+"h");
+                    System.out.println("Checking date: " + day + "/" + month + "/14 - " + hour + "h");
 
                     if (!parsedMsg[3].equals("ack:yes")) {
                         if (!checkCalendarDate(month, day, hour)) {
@@ -243,7 +244,7 @@ public class Client2 {
                             String iv = utils.generateRandomIV();
                             // out.writeUTF("Bob:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
                             out.writeUTF("Bob:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, _sharedKey, iv)) + ":" + iv);
-                            _calendar[month][day][hour]=1;
+                            _calendar[month][day][hour] = 1;
                             System.out.println("Found common date! Meeting with Alice scheduled  to " + day + "/" + month + "/14 at " + hour + " hours.");
                             return;
                         }
@@ -358,12 +359,12 @@ public class Client2 {
             parsedMsg = parseMessage(message, socketClient, out);
 
             if (!(parsedMsg == null)) {
-            	// System.out.println("DHC1:2:1");
+                // System.out.println("DHC1:2:1");
                 A = new BigInteger(parsedMsg[4]);
                 _sharedKeyBI = A.modPow(x, p);
                 // System.out.println(_sharedKeyBI);
                 _sharedKey = utils.getSHA256(_sharedKeyBI);
-                x=null;
+                x = null;
             } else {
                 socketClient.close();
             }
@@ -394,13 +395,13 @@ public class Client2 {
 
             parsedMsg = parseMessage(message, socketClient, out);
 
-            if (Nb.equals(parsedMsg[4])){
+            if (Nb.equals(parsedMsg[4])) {
 
                 System.out.println("Challenge Successful.");
                 establishMeetingDate(socketAlice);
                 socketAlice.close();
                 return;
-            }else if ((!(parsedMsg == null)) || (!Nb.equals(parsedMsg[4]))) {
+            } else if ((!(parsedMsg == null)) || (!Nb.equals(parsedMsg[4]))) {
                 System.out.println("Challenge unsuccessful.");
                 socketAlice.close();
             }
@@ -570,7 +571,8 @@ public class Client2 {
             port = Integer.parseInt(args[2]);
         }
 
-        // authenticateUser(correctHash);
+        // if(!dbug)
+        authenticateUser(correctHash);
 
         bob = null;
         try {
@@ -593,8 +595,10 @@ public class Client2 {
             try {
                 Socket server = bob.waitConnection();
                 System.out.println("Meeting scheduling request received from Alice. Do you want to accept it? [y/n]");
-                // response = getInput();
-                response = "y";
+                // if(!dbug)
+                response = getInput();
+                // else
+                // response = "y";
                 if (response.equals("y")) {
                     DataOutputStream out = new DataOutputStream(server.getOutputStream());
                     DataInputStream in = new DataInputStream(server.getInputStream());

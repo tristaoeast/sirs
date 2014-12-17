@@ -209,8 +209,8 @@ public class Client1 {
             String[] parsedMsg = null;
 
             System.out.println("Please insert date interval [DD/MM-DD/MM]");
-            // dateInterval = parseDateInput(getInput());
-            dateInterval = parseDateInput("12/12-13/12");
+            dateInterval = parseDateInput(getInput());
+            // dateInterval = parseDateInput("12/12-18/12");
             lastCheckedDay = dateInterval[0];
             lastCheckedMonth = dateInterval[1];
 
@@ -303,6 +303,85 @@ public class Client1 {
                 out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, _sharedKey, iv)) + ":" + iv);
             }
             //socketClient.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void findRandomCommonDate(Socket socketClient, DataOutputStream out, DataInputStream in) {
+
+        AES aes = new AES();
+        Utils utils = new Utils();
+        int[] dateInterval = new int[4];
+        int lastCheckedDay, lastCheckedMonth;
+        int day, month, hour;
+
+        try {
+            String message = "";
+            String[] parsedMsg = null;
+
+            System.out.println("Please insert date interval [DD/MM-DD/MM]");
+            // dateInterval = parseDateInput(getInput());
+            dateInterval = parseDateInput("12/12-13/12");
+            lastCheckedDay = dateInterval[0];
+            lastCheckedMonth = dateInterval[1];
+            int limit =  6 * (dateInterval[2] - dateInterval[0] + 1) * (dateInterval[3] - dateInterval[1] + 1);
+            System.out.println("Limit: "+limit);
+            int tmpCal[][][] = new int[13][32][24];
+            for (int i = 1; i < 13; i++) {
+                for (int j = 1; j < 32; j++) {
+                    for (int k = 0; k < 24; k++) {
+                        tmpCal[i][j][k] = 0;
+                    }
+                }
+            }
+            int cnt = 0;
+
+
+            while (cnt < limit) {
+                month = utils.randInt(dateInterval[1], dateInterval[3]);
+                day = utils.randInt(dateInterval[0], dateInterval[2]);
+                hour = utils.randInt(8, 20);
+                if (tmpCal[month][day][hour] != 0) {
+                    continue;
+                }
+                if (_calendar[month][day][hour] != 0) {
+                    continue;
+                } else {
+                    tmpCal[month][day][hour] = 1;
+                    cnt++;
+                    System.out.println("Checking date: " + day + "/" + month + "/14 - " + hour + "h");
+                    String msg = "Alice,CHECK," + Integer.toString(day) + "/" + Integer.toString(month) + "/14-" + Integer.toString(hour) + "," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis());
+                    String iv = utils.generateRandomIV();
+                    // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
+                    out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, _sharedKey, iv)) + ":" + iv);
+                    message = in.readUTF();
+                    parsedMsg = parseMessage(message, socketClient, out);
+                    if (!(parsedMsg == null)) {
+                        if (parsedMsg[3].equals("Yes")) {
+                            System.out.println("Found common date! Meeting with Bob scheduled to " + lastCheckedDay + "/" + lastCheckedMonth + "/14 at " + hour + " hours.");
+                            _calendar[lastCheckedMonth][lastCheckedDay][hour] = 1;
+                            return;
+                        } else {
+                            System.out.println("Bob\'s busy.");
+                            continue;
+                        }
+                    } else {
+                        socketClient.close();
+                        System.out.println("ERROR: parsedMsg == null");
+                        return;
+                    }
+                }
+            }
+            if (!parsedMsg[3].equals("Yes")) {
+                System.out.println("Unable to find common date.");
+                String msg = "Alice,NODATE,No common date found," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis());
+                String iv = utils.generateRandomIV();
+                // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
+                out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, _sharedKey, iv)) + ":" + iv);
+                return;
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (Exception e) {
@@ -430,7 +509,7 @@ public class Client1 {
                     // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
                     out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, _sharedKey, iv)) + ":" + iv);
                     // System.out.println("AQUI VOU EU!!!");
-                    findCommonDate(socketClient, out, in);
+                    findRandomCommonDate(socketClient, out, in);
                     socketClient.close();
                 }
 
@@ -675,7 +754,7 @@ public class Client1 {
         }
 
 
-        // authenticateUser(correctHash);
+        authenticateUser(correctHash);
 
         // String input = "";
         // while(!input.equals("y")){
@@ -691,8 +770,8 @@ public class Client1 {
             // System.out.println("");
             System.out.println("[0] Exit");
             try {
-                // int opt = Integer.parseInt(getInput());
-                int opt = 1;
+                int opt = Integer.parseInt(getInput());
+                // int opt = 1;
                 if (opt == 0)
                     System.exit(0);
                 if (opt == 1) {
