@@ -283,7 +283,9 @@ public class Client1
 			if(!parsedMsg[3].equals("Yes")){
 
 				System.out.println("Unable to find common date.");
-				out.writeUTF("Alice:Alice,unable to find common date");
+				String msg = "Alice,NODATE,No common date found," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis());
+				String iv = utils.generateRandomIV();
+				out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKey.toString()), iv)) + ":" + iv);
 			}
 			//socketClient.close();
 		}
@@ -629,8 +631,10 @@ public class Client1
    		String correctHash = "1000:4ef06e4a486a7f279ee1fb67b9f66ff1ad0c1fc1da22e8f7:1cb66a2517552374390797c200ff32205a457184e4ba4cf5";
 
    		if(args.length != 2) {
-   			System.err.println("Too few arguments. Run using Client1 [serverHostname] [serverPort]");
-   			System.exit(-1);
+   			// System.err.println("Too few arguments. Run using Client1 [serverHostname] [serverPort]");
+   			// System.exit(-1);
+   			serverName = "localhost";
+   			port = 8080;
    		}
    		else {
       		serverName = args[0];
@@ -648,7 +652,7 @@ public class Client1
       	alice.registerWithServer(serverName, port);
 
       	boolean repeat = true;
-    input1: while(repeat){
+    	input1: while(repeat){
 	      	System.out.println("What do you want to do?");
 	      	System.out.println("[1] Schedule a meeting");
 	      	// System.out.println("");
@@ -665,16 +669,20 @@ public class Client1
 			      		opt = Integer.parseInt(getInput());
 			      		if(opt == 1){
 			      			if(alice.requestMeeting(serverName, port)){
-
+			      				System.out.println("HURRA!");
 			      			}
 			      			
 			      		}
 			      		else continue input2;
 		      		}
 		      	} else break;
-	      	} catch(Exception e){
-	      		System.out.println("Input must be a number");
+		    
+
+		    } catch (NumberFormatException e) {
+		    	System.out.println("Input must be a number");
 	      		continue input1;
+		    } catch(Exception e){
+		    	e.printStackTrace();
 	      	}
       	}
 
