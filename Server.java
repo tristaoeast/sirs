@@ -320,7 +320,6 @@ public class Server extends Thread {
                             continue;
                         }
                     }
-
                 }
 
                 else {
@@ -331,7 +330,7 @@ public class Server extends Thread {
                 server.close();
             } catch (SocketTimeoutException s) {
                 System.out.println("Socket timed out!");
-                break;
+                continue;
             } catch (IOException e) {
                 e.printStackTrace();
                 break;
@@ -349,8 +348,9 @@ public class Server extends Thread {
     public static void main(String [] args) {
         int port = 0;
         if (args.length != 1) {
-            System.err.println("ERROR: Too few arguments. Run using Server [serverPort]");
-            System.exit(-1);
+            // System.err.println("ERROR: Too few arguments. Run using Server [serverPort]");
+            // System.exit(-1);
+            port = 8080;
         } else
             port = Integer.parseInt(args[0]);
 
