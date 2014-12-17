@@ -559,6 +559,8 @@ public class Client1 {
                 if (decMsg[1].equals("ACCEPT")) {
                     if ((validNonce(decMsg[decMsg.length - 2], utils.getTimeStamp()))
                             && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(decMsg[decMsg.length - 1]))) {
+                    	int bobPort = Integer.parseInt(decMsg[4]);
+                    	// System.out.println(bobPort);
                         System.out.println("Meeting scheduling accepted by Bob");
                         createDHPublicValues(socketClient, out, in);
                         return true;

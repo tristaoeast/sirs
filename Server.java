@@ -244,7 +244,7 @@ public class Server extends Thread {
                                                     if (!(aDecMsg[1].equals("DH")) && (bDecMsg[1].equals("DH"))) {
 
                                                         if (aDecMsg.length == 6 && bDecMsg.length == 6) {
-                                                            System.out.println(aOuterMsg[0] + " sent DH response " + aDecMsg[aDecMsg.length - 3] + " and " + aOuterMsg[0] + " sent DH response " + bDecMsg[bDecMsg.length - 3]);
+                                                            System.out.println(aOuterMsg[0] + " sent DH response " + aDecMsg[aDecMsg.length - 3] + " and " + bOuterMsg[0] + " sent DH response " + bDecMsg[bDecMsg.length - 3]);
                                                             if (((validNonce(aDecMsg[aDecMsg.length - 2], utils.getTimeStamp()))
                                                                     && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(aDecMsg[aDecMsg.length - 1])))
                                                                     && ((validNonce(bDecMsg[bDecMsg.length - 2], utils.getTimeStamp())) && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(bDecMsg[bDecMsg.length - 1])))) {
