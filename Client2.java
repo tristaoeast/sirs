@@ -212,7 +212,7 @@ public class Client2 {
             String[] parsedMsg = null;
 
             while (true) {
-
+                System.out.println("Waiting for scheduling request...");
                 message = in.readUTF();
                 parsedMsg = parseMessage(message, server, out);
 
@@ -244,10 +244,12 @@ public class Client2 {
                         break;
                     }
                 } else {
-                    server.close();
+                    System.out.println("establishMeetingDate: parsedMsg == null.");
+                    // server.close();
+                    return;
                 }
             }
-            server.close();
+            // server.close();
         } catch (IOException e) {
             e.printStackTrace();
         } catch (Exception e) {
@@ -354,6 +356,7 @@ public class Client2 {
                 _sharedKeyBI = A.modPow(x, p);
                 System.out.println(_sharedKeyBI);
                 _sharedKey = utils.getSHA256(_sharedKeyBI);
+                x=null;
             } else {
                 socketClient.close();
             }
@@ -371,24 +374,31 @@ public class Client2 {
             if (!(parsedMsg == null)) {
             	System.out.println("ENTREI");
                 Nb = utils.generateRandomNonce();
-                message = "Alice,DH,Bob," + parsedMsg[4] + "," + Nb + "," + String.valueOf(System.currentTimeMillis());
+                message = "Alice,DH,Bob," + parsedMsg[3] + "," + Nb + "," + String.valueOf(System.currentTimeMillis());
                 iv = utils.generateRandomIV();
                 // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
                 System.out.println(iv.length());
                 outToAlice.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, _sharedKey, iv)) + ":" + iv);
-                System.out.println("Sent challenge to Alice with generated shared key.");
+                System.out.println("Sent challenge response to Alice with generated shared key.");
             } else {
                 socketAlice.close();
             }
 
+            System.out.println("Waiting for Alice\'s response to challenge...");
             message = inFromAlice.readUTF();
 
             parsedMsg = parseMessage(message, socketClient, out);
 
-            if ((!(parsedMsg == null)) || (!Nb.equals(parsedMsg[4]))) {
+            if (Nb.equals(parsedMsg[4])){
 
+                System.out.println("Challenge Successful.");
+                establishMeetingDate(socketAlice);
+                socketAlice.close();
+            }else if ((!(parsedMsg == null)) || (!Nb.equals(parsedMsg[4]))) {
+                System.out.println("Challenge unsuccessful.");
                 socketAlice.close();
             }
+
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -554,6 +564,8 @@ public class Client2 {
             port = Integer.parseInt(args[2]);
         }
 
+        // authenticateUser(correctHash);
+
         bob = null;
         try {
             bob = new Client2(localPort, serverName, port);
@@ -561,7 +573,7 @@ public class Client2 {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        // authenticateUser(correctHash);
+
 
         // String input = "";
         //    while(!input.equals("y")){
