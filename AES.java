@@ -38,8 +38,6 @@ public class AES {
     return encryptionKey;
   }
 
-  
-
   public SecretKey generateSecretKey()
   {
     // Get the KeyGenerator
@@ -47,7 +45,8 @@ public class AES {
     SecretKey skey = null;
     try{
       KeyGenerator kgen = KeyGenerator.getInstance("AES");
-      kgen.init(256);
+      // kgen.init(256); //for the sake of the demo, since the default parameters of JDK don't allow 256 bit we will be using a smaller key
+      kgen.init(192); //for the sake of the demo, since the default parameters of JDK don't allow 256 bit we will be using a smaller key
 
       // Generate the secret key specs.
       skey = kgen.generateKey();
