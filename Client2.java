@@ -12,7 +12,6 @@ import javax.crypto.*;
 import java.security.*;
 import javax.xml.bind.DatatypeConverter;
 
-<<<<<<< HEAD
 public class Client2
 {
 
