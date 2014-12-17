@@ -187,6 +187,8 @@ public class Client1 {
         String[] split1 = interval.split("-");
         String[] split2 = split1[0].split("/");
         String[] split3 = split1[1].split("/");
+        // System.out.println(split2[0]);
+        // System.out.println(split2[1]);
 
         dateInterval[0] = Integer.parseInt(split2[0]);
         dateInterval[1] = Integer.parseInt(split2[1]);
@@ -207,16 +209,19 @@ public class Client1 {
             String message = "";
             String[] parsedMsg = null;
 
-            dateInterval = parseDateInput(getInput());
+            System.out.println("Please insert date interval [DD/MM-DD/MM]");
+            // dateInterval = parseDateInput(getInput());
+            dateInterval = parseDateInput("12/12-12/13");
             lastCheckedDay = dateInterval[0];
             lastCheckedMonth = dateInterval[1];
 
             while (lastCheckedMonth != dateInterval[3]) {
-
+                System.out.println("1");
                 while (lastCheckedDay < 32) {
-
+                    System.out.println("2");
                     int i = 0;
                     while (i < 24) {
+                        System.out.println("3");
 
                         if (_calendar[lastCheckedMonth][lastCheckedDay][i] != 0) {
                             i++;
@@ -251,10 +256,12 @@ public class Client1 {
             if (lastCheckedMonth == dateInterval[3] && !message.equals("Yes")) {
 
                 while (lastCheckedDay <= dateInterval[2]) {
+                    System.out.println("ENTREI1");
 
                     int i = 0;
                     while (i < 24) {
-
+                        System.out.println(i);
+                        System.out.println("LCD: " + lastCheckedDay + " " + lastCheckedMonth);
                         if (_calendar[lastCheckedMonth][lastCheckedDay][i] != 0) {
                             i++;
                         } else {
@@ -343,7 +350,7 @@ public class Client1 {
         socketClient.close();
     }
 
-    public void createDHPublicValues(Socket socketCl, DataOutputStream outsrv, DataInputStream insrv) {
+    public void createDHPublicValues(Socket socketCl, DataOutputStream outsrv, DataInputStream insrv, int bobPort) {
 
         try {
             Socket socketClient = socketCl;
@@ -369,25 +376,25 @@ public class Client1 {
                 message = "Alice,DH,Bob," + A.toString() + "," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis());
                 iv = utils.generateRandomIV();
                 outsrv.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, aes.readKeyFromFile("AliceKeyStore"), iv)) + ":" + iv);
-                System.out.println("DHC1:1");
+                // System.out.println("DHC1:1");
             } else {
                 socketClient.close();
             }
 
             message = insrv.readUTF();
             socketClient.close();
-            socketClient = new Socket("localhost", 8082);
+            socketClient = new Socket("localhost", bobPort);
             OutputStream outToServer = socketClient.getOutputStream();
             DataOutputStream out = new DataOutputStream(outToServer);
             InputStream inFromServer = socketClient.getInputStream();
             DataInputStream in = new DataInputStream(inFromServer);
-            System.out.println("DHC1:2");
+            // System.out.println("DHC1:2");
             parsedMsg = parseMessage(message, socketClient, out);
 
             if (!(parsedMsg == null)) {
                 B = new BigInteger(parsedMsg[4]);
                 _sharedKeyBI = B.modPow(x, p);
-                System.out.println(_sharedKeyBI);
+                // System.out.println(_sharedKeyBI);
                 _sharedKey = utils.getSHA256(_sharedKeyBI);
                 x=null;
 
@@ -396,7 +403,7 @@ public class Client1 {
                 iv = utils.generateRandomIV();
                 // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
                 out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, _sharedKey, iv)) + ":" + iv);
-                System.out.println(aes.decrypt(aes.encrypt(message,_sharedKey,iv),_sharedKey,iv));
+                // System.out.println(aes.decrypt(aes.encrypt(message,_sharedKey,iv),_sharedKey,iv));
                 System.out.println("Sent challenge to Bob with generated shared key.");
             } else {
                 socketClient.close();
@@ -408,18 +415,19 @@ public class Client1 {
             parsedMsg = parseMessage(message, socketClient, out);
 
             if (!(parsedMsg == null)) {
-
-                if(Na.equals(parsedMsg[3])) {
-                    System.out.println("Bob responded successfuly to challenge. Sending challenge acknowledgement");
+                System.out.println(Na + "\n\n\n" + parsedMsg[0] + "\n\n\n" + parsedMsg[1] + "\n\n\n" + parsedMsg[2] + "\n\n\n" + parsedMsg[3]);
+                if(Na.equals(parsedMsg[4])) {
+                    System.out.println("Bob responded successfuly to challenge. Sending challenge acknowledgement.");
                     message = "Alice,DH,Bob," + parsedMsg[5] + "," + String.valueOf(System.currentTimeMillis());
                     iv = utils.generateRandomIV();
                     // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
                     out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, _sharedKey, iv)) + ":" + iv);
+                    System.out.println("AQUI VOU EU!!!");
+                    findCommonDate(socketClient, out, in);
                 }
 
-                if (!(Na.equals(parsedMsg[3]))) {
+                else if (!(Na.equals(parsedMsg[3]))) {
                     System.out.println("Challenge unsuccessful.");
-
                     socketClient.close();
                 }
 
@@ -583,7 +591,7 @@ public class Client1 {
                     	int bobPort = Integer.parseInt(decMsg[4]);
                     	// System.out.println(bobPort);
                         System.out.println("Meeting scheduling accepted by Bob");
-                        createDHPublicValues(socketClient, out, in);
+                        createDHPublicValues(socketClient, out, in, bobPort);
                         return true;
                     }
 
@@ -675,8 +683,8 @@ public class Client1 {
             // System.out.println("");
             System.out.println("[0] Exit");
             try {
-                int opt = Integer.parseInt(getInput());
-                // int opt = 1;
+                // int opt = Integer.parseInt(getInput());
+                int opt = 1;
                 if (opt == 0)
                     System.exit(0);
                 if (opt == 1) {
@@ -688,7 +696,8 @@ public class Client1 {
                         // opt = 1;
                         if (opt == 1) {
                             if (alice.requestMeeting(serverName, port)) {
-                                System.out.println("HURRA!");
+                                // System.out.println("HURRA!");
+
                             }
                         } else if (opt == 0) {
                             continue input1;

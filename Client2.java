@@ -341,20 +341,20 @@ public class Client2 {
                 message = "Bob,DH,Alice," + B.toString() + "," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis());
                 iv = utils.generateRandomIV();
                 out.writeUTF("Bob:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, aes.readKeyFromFile("BobKeyStore"), iv)) + ":" + iv);
-                System.out.println("DHC1:1");
+                // System.out.println("DHC1:1");
             } else {
-                System.out.println("banana");
+                System.out.println("Parsed message == null");
                 socketClient.close();
             }
-            System.out.println("DHC1:2");
+            // System.out.println("DHC1:2");
             message = in.readUTF();
             parsedMsg = parseMessage(message, socketClient, out);
 
             if (!(parsedMsg == null)) {
-            	System.out.println("DHC1:2:1");
+            	// System.out.println("DHC1:2:1");
                 A = new BigInteger(parsedMsg[4]);
                 _sharedKeyBI = A.modPow(x, p);
-                System.out.println(_sharedKeyBI);
+                // System.out.println(_sharedKeyBI);
                 _sharedKey = utils.getSHA256(_sharedKeyBI);
                 x=null;
             } else {
@@ -368,17 +368,16 @@ public class Client2 {
             DataInputStream inFromAlice = new  DataInputStream(socketAlice.getInputStream());
 
             message = inFromAlice.readUTF();
-            System.out.println("DHC1:3");
+            // System.out.println("DHC1:3");
             parsedMsg = parseMessage(message, socketAlice, outToAlice);
 
             if (!(parsedMsg == null)) {
             	System.out.println("ENTREI");
                 Nb = utils.generateRandomNonce();
-                message = "Alice,DH,Bob," + parsedMsg[3] + "," + Nb + "," + String.valueOf(System.currentTimeMillis());
+                message = "Bob,DH,Alice," + parsedMsg[4] + "," + Nb + "," + String.valueOf(System.currentTimeMillis());
                 iv = utils.generateRandomIV();
                 // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
-                System.out.println(iv.length());
-                outToAlice.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, _sharedKey, iv)) + ":" + iv);
+                outToAlice.writeUTF("Bob:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, _sharedKey, iv)) + ":" + iv);
                 System.out.println("Sent challenge response to Alice with generated shared key.");
             } else {
                 socketAlice.close();
@@ -386,6 +385,7 @@ public class Client2 {
 
             System.out.println("Waiting for Alice\'s response to challenge...");
             message = inFromAlice.readUTF();
+            System.out.println("LI ESSA PORRA!!!");
 
             parsedMsg = parseMessage(message, socketClient, out);
 
