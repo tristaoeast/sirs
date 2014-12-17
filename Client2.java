@@ -97,7 +97,7 @@ public class Client2 {
         }
 
         if (maux1[0].equals(maux2[0]) && (maux2.length > 1)) {
-            System.out.println(maux2[1]);
+            // System.out.println(maux2[1]);
             if (maux2[1].equals("CHECK")) {
 
                 if (maux2.length == 5) {
@@ -112,6 +112,7 @@ public class Client2 {
                         parsedMsg[4] = maux2[3];
                         parsedMsg[5] = maux2[4];
                         parsedMsg[6] = maux1[2];
+                        System.out.println("CHECK");
                         return parsedMsg;
                     } else {
                         expiredMessage(socketClient, out);
@@ -166,9 +167,9 @@ public class Client2 {
                 } else {
                 	System.out.println(maux2.length);
                     if (maux2.length == 5) {
-                    	System.out.println("ENTREI1");
+                    	// System.out.println("ENTREI1");
                         if (validNonce(maux2[3], utils.getTimeStamp()) && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(maux2[4]))) {
-                        	System.out.println("ENTREI2");
+                        	// System.out.println("ENTREI2");
                             parsedMsg = new String[7];
                             parsedMsg[0] = maux1[0];
                             parsedMsg[1] = maux2[0];

@@ -72,7 +72,6 @@ public class Client1 {
                 maux2 = decryptAndSplitMsg(maux1[1], maux1[2], "Alice");
             } else {
                 // String decryptedMsg = aes.decrypt(DatatypeConverter.parseBase64Binary(maux1[1]), DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), maux1[2]);
-                System.out.println(maux1[2].length());
                 String decryptedMsg = aes.decrypt(DatatypeConverter.parseBase64Binary(maux1[1]), _sharedKey, maux1[2]);
                 maux2 = decryptedMsg.split(",");
             }
@@ -150,7 +149,7 @@ public class Client1 {
                         wrongFormatMessage(socketClient, out);
                     }
                 } else {
-                    
+
                     if (maux2.length == 6) {
 
                         if (validNonce(maux2[4], utils.getTimeStamp()) && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(maux2[5]))) {
@@ -215,16 +214,15 @@ public class Client1 {
             lastCheckedDay = dateInterval[0];
             System.out.println("LCD: " + lastCheckedDay);
             lastCheckedMonth = dateInterval[1];
-            System.out.println("LCM: "+lastCheckedMonth);
+            System.out.println("LCM: " + lastCheckedMonth);
             System.out.println("di3: " + dateInterval[3]);
 
             while (lastCheckedMonth != dateInterval[3]) {
-                System.out.println("1");
+                System.out.println("ENTREI1");
                 while (lastCheckedDay < 32) {
-                    System.out.println("2");
+                    System.out.println("ENTREI1:1");
                     int i = 0;
                     while (i < 24) {
-                        System.out.println("3");
 
                         if (_calendar[lastCheckedMonth][lastCheckedDay][i] != 0) {
                             i++;
@@ -257,17 +255,20 @@ public class Client1 {
                 lastCheckedMonth++;
             }
             if (lastCheckedMonth == dateInterval[3] && !message.equals("Yes")) {
-
+                System.out.println("ENTREI2");
                 while (lastCheckedDay <= dateInterval[2]) {
-                    System.out.println("ENTREI1");
+                    System.out.println("ENTREI2:1");
 
                     int i = 0;
                     while (i < 24) {
                         System.out.println(i);
                         // System.out.println("LCD: " + lastCheckedDay + " " + lastCheckedMonth);
                         if (_calendar[lastCheckedMonth][lastCheckedDay][i] != 0) {
+                            System.out.println("ENTREI2:1:1");
                             i++;
+                            break;
                         } else {
+                            System.out.println("ENTREI2:1:2");
                             String msg = "Alice,CHECK," + Integer.toString(lastCheckedDay) + "/" + Integer.toString(lastCheckedMonth) + "/14-" + Integer.toString(i) + "," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis());
                             String iv = utils.generateRandomIV();
                             // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
@@ -278,6 +279,9 @@ public class Client1 {
                         if (!(parsedMsg == null)) {
 
                             if (parsedMsg[3].equals("Yes")) {
+                                break;
+                            } else {
+                                i++;
                                 break;
                             }
                         } else {
@@ -399,7 +403,7 @@ public class Client1 {
                 _sharedKeyBI = B.modPow(x, p);
                 // System.out.println(_sharedKeyBI);
                 _sharedKey = utils.getSHA256(_sharedKeyBI);
-                x=null;
+                x = null;
 
                 Na = utils.generateRandomNonce();
                 message = "Alice,DH,Bob," + Na + "," + String.valueOf(System.currentTimeMillis());
@@ -419,7 +423,7 @@ public class Client1 {
 
             if (!(parsedMsg == null)) {
                 // System.out.println(Na + "\n\n\n" + parsedMsg[0] + "\n\n\n" + parsedMsg[1] + "\n\n\n" + parsedMsg[2] + "\n\n\n" + parsedMsg[3]);
-                if(Na.equals(parsedMsg[4])) {
+                if (Na.equals(parsedMsg[4])) {
                     System.out.println("Bob responded successfuly to challenge. Sending challenge acknowledgement.");
                     message = "Alice,DH,Bob," + parsedMsg[5] + "," + String.valueOf(System.currentTimeMillis());
                     iv = utils.generateRandomIV();
@@ -591,8 +595,8 @@ public class Client1 {
                 if (decMsg[1].equals("ACCEPT")) {
                     if ((validNonce(decMsg[decMsg.length - 2], utils.getTimeStamp()))
                             && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(decMsg[decMsg.length - 1]))) {
-                    	int bobPort = Integer.parseInt(decMsg[4]);
-                    	// System.out.println(bobPort);
+                        int bobPort = Integer.parseInt(decMsg[4]);
+                        // System.out.println(bobPort);
                         System.out.println("Meeting scheduling accepted by Bob");
                         createDHPublicValues(socketClient, out, in, bobPort);
                         return true;
