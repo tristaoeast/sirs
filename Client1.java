@@ -150,7 +150,7 @@ public class Client1 {
                         wrongFormatMessage(socketClient, out);
                     }
                 } else {
-
+                    System.out.println("Maux2 length: " + maux2.length);
                     if (maux2.length == 6) {
 
                         if (validNonce(maux2[4], utils.getTimeStamp()) && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(maux2[5]))) {
@@ -366,7 +366,7 @@ public class Client1 {
                 g = new BigInteger(parsedMsg[5]);
                 A = g.modPow(x, p);
 
-                message = "Alice, DH, Bob," + A.toString() + "," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis());
+                message = "Alice,DH,Bob," + A.toString() + "," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis());
                 iv = utils.generateRandomIV();
                 outsrv.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, aes.readKeyFromFile("AliceKeyStore"), iv)) + ":" + iv);
                 System.out.println("DHC1:1");
@@ -396,16 +396,20 @@ public class Client1 {
                 // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
                 out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, _sharedKey, iv)) + ":" + iv);
                 System.out.println(aes.decrypt(aes.encrypt(message,_sharedKey,iv),_sharedKey,iv));
+                System.out.println("Sent challenge to Bob with generated shared key.");
             } else {
                 socketClient.close();
             }
 
+            System.out.println("Waiting for Bob\'s response to challenge...");
             message = in.readUTF();
             System.out.println("DHC1:3");
             parsedMsg = parseMessage(message, socketClient, out);
 
             if (!(parsedMsg == null)) {
-                if (!Na.equals(parsedMsg[4])) {
+                
+                if (Na.equals(parsedMsg[3])) {
+                    System.out.println("Challenge completed successfully");
 
                     socketClient.close();
                 }
@@ -665,7 +669,8 @@ public class Client1 {
             // System.out.println("");
             System.out.println("[0] Exit");
             try {
-                int opt = Integer.parseInt(getInput());
+                // int opt = Integer.parseInt(getInput());
+                int opt = 1;
                 if (opt == 0)
                     System.exit(0);
                 if (opt == 1) {
@@ -674,6 +679,7 @@ public class Client1 {
                         System.out.println("Who do you want to schedule a meeting with?");
                         System.out.println("[1] Bob\n[0] Go back.");
                         opt = Integer.parseInt(getInput());
+                        // opt = 1;
                         if (opt == 1) {
                             if (alice.requestMeeting(serverName, port)) {
                                 System.out.println("HURRA!");

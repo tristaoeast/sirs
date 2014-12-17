@@ -92,7 +92,7 @@ public class Client2 {
                 maux2 = decryptedMsg.split(",");
             }
         } else {
-            wrongFormatMessage(socketClient, out);
+            wrongFormatMessage(socketClient, out, "1");
             System.out.println("troll1\n");
         }
 
@@ -117,7 +117,7 @@ public class Client2 {
                         expiredMessage(socketClient, out);
                     }
                 } else {
-                    wrongFormatMessage(socketClient, out);
+                    wrongFormatMessage(socketClient, out, "2");
                     System.out.println("troll2\n");
                 }
             } else if (maux2[1].equals("DH")) {
@@ -160,11 +160,11 @@ public class Client2 {
                             expiredMessage(socketClient, out);
                         }
                     } else {
-                        wrongFormatMessage(socketClient, out);
+                        wrongFormatMessage(socketClient, out, "3");
                         System.out.println("troll3\n");
                     }
                 } else {
-                	System.out.println(maux2[0]+","+maux2[1]+","+maux2[2]+","+maux2[3]+","+maux2[4]+","+maux2[5]);
+                	System.out.println(maux2.length);
                     if (maux2.length == 5) {
                     	System.out.println("ENTREI1");
                         if (validNonce(maux2[3], utils.getTimeStamp()) && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(maux2[4]))) {
@@ -182,7 +182,7 @@ public class Client2 {
                             expiredMessage(socketClient, out);
                         }
                     } else {
-                        wrongFormatMessage(socketClient, out);
+                        wrongFormatMessage(socketClient, out, "4");
                         System.out.println("troll4\n");
                     }
                 }
@@ -274,9 +274,9 @@ public class Client2 {
             return false;
     }
 
-    private void wrongFormatMessage(Socket socketClient, DataOutputStream out) throws IOException {
+    private void wrongFormatMessage(Socket socketClient, DataOutputStream out, String cnt) throws IOException {
 
-        String errorMessage = "ERROR: Message with wrong format received. Aborting current connection...";
+        String errorMessage = "ERROR: Message with wrong format received. Aborting current connection... " + cnt;
         System.out.println(errorMessage);
         out.writeUTF("ALice:Alice,ERROR" + errorMessage);
         socketClient.close();
@@ -360,6 +360,7 @@ public class Client2 {
             socketClient.close(); //Closes connection with server
 
             Socket socketAlice = waitConnection();
+            System.out.println("Received connection on port 8082.");
             DataOutputStream outToAlice = new  DataOutputStream(socketAlice.getOutputStream());
             DataInputStream inFromAlice = new  DataInputStream(socketAlice.getInputStream());
 
@@ -370,16 +371,18 @@ public class Client2 {
             if (!(parsedMsg == null)) {
             	System.out.println("ENTREI");
                 Nb = utils.generateRandomNonce();
-                message = "Alice,DH,Bob," + "," + parsedMsg[4] + "," + Nb + "," + String.valueOf(System.currentTimeMillis());
+                message = "Alice,DH,Bob," + parsedMsg[4] + "," + Nb + "," + String.valueOf(System.currentTimeMillis());
                 iv = utils.generateRandomIV();
                 // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
                 System.out.println(iv.length());
                 outToAlice.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, _sharedKey, iv)) + ":" + iv);
+                System.out.println("Sent challenge to Alice with generated shared key.");
             } else {
                 socketAlice.close();
             }
 
             message = inFromAlice.readUTF();
+
             parsedMsg = parseMessage(message, socketClient, out);
 
             if ((!(parsedMsg == null)) || (!Nb.equals(parsedMsg[4]))) {
@@ -572,7 +575,8 @@ public class Client2 {
             try {
                 Socket server = bob.waitConnection();
                 System.out.println("Meeting scheduling request received from Alice. Do you want to accept it? [y/n]");
-                response = getInput();
+                // response = getInput();
+                response = "y";
                 if (response.equals("y")) {
                     DataOutputStream out = new DataOutputStream(server.getOutputStream());
                     DataInputStream in = new DataInputStream(server.getInputStream());
