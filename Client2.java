@@ -15,7 +15,7 @@ import javax.xml.bind.DatatypeConverter;
 
 public class Client2 {
 
-    private int _calendar[][][];
+    private int _calendar[][][] = new int[13][32][24];
     //private DiffieHellman _dh;
     private BigInteger _sharedKeyBI;
     private byte[] _sharedKey;
@@ -28,7 +28,7 @@ public class Client2 {
 
     public Client2(int localPort, String serverName, int serverPort) throws IOException, SocketException {
 
-        int[][][] _calendar = new int[13][32][24];
+        // _calendar = new int[13][32][24];
         //_dh = new DiffieHellman();
         noncesMap = new TreeMap<String, Long>();
         aes = new AES();
@@ -372,7 +372,6 @@ public class Client2 {
             parsedMsg = parseMessage(message, socketAlice, outToAlice);
 
             if (!(parsedMsg == null)) {
-            	System.out.println("ENTREI");
                 Nb = utils.generateRandomNonce();
                 message = "Bob,DH,Alice," + parsedMsg[4] + "," + Nb + "," + String.valueOf(System.currentTimeMillis());
                 iv = utils.generateRandomIV();
@@ -385,7 +384,6 @@ public class Client2 {
 
             System.out.println("Waiting for Alice\'s response to challenge...");
             message = inFromAlice.readUTF();
-            System.out.println("LI ESSA PORRA!!!");
 
             parsedMsg = parseMessage(message, socketClient, out);
 

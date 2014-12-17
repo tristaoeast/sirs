@@ -16,7 +16,7 @@ import javax.xml.bind.DatatypeConverter;
 
 
 public class Client1 {
-    private int _calendar[][][];
+    private int _calendar[][][] = new int[13][32][24];
     //private DiffieHellman _dh;
     private BigInteger _sharedKeyBI;
     private byte[] _sharedKey;
@@ -26,7 +26,7 @@ public class Client1 {
     private GregorianCalendar cal;
 
     public void Client1() {
-        int[][][] _calendar = new int[13][32][24];
+        // _calendar = new int[13][32][24];
         //_dh = new DiffieHellman();
         noncesMap = new TreeMap<String, Long>();
         aes = new AES();
@@ -150,7 +150,7 @@ public class Client1 {
                         wrongFormatMessage(socketClient, out);
                     }
                 } else {
-                    System.out.println("Maux2 length: " + maux2.length);
+                    
                     if (maux2.length == 6) {
 
                         if (validNonce(maux2[4], utils.getTimeStamp()) && withinTimeFrame(utils.getTimeStamp(), Long.parseLong(maux2[5]))) {
@@ -211,9 +211,12 @@ public class Client1 {
 
             System.out.println("Please insert date interval [DD/MM-DD/MM]");
             // dateInterval = parseDateInput(getInput());
-            dateInterval = parseDateInput("12/12-12/13");
+            dateInterval = parseDateInput("12/12-13/12");
             lastCheckedDay = dateInterval[0];
+            System.out.println("LCD: " + lastCheckedDay);
             lastCheckedMonth = dateInterval[1];
+            System.out.println("LCM: "+lastCheckedMonth);
+            System.out.println("di3: " + dateInterval[3]);
 
             while (lastCheckedMonth != dateInterval[3]) {
                 System.out.println("1");
@@ -261,7 +264,7 @@ public class Client1 {
                     int i = 0;
                     while (i < 24) {
                         System.out.println(i);
-                        System.out.println("LCD: " + lastCheckedDay + " " + lastCheckedMonth);
+                        // System.out.println("LCD: " + lastCheckedDay + " " + lastCheckedMonth);
                         if (_calendar[lastCheckedMonth][lastCheckedDay][i] != 0) {
                             i++;
                         } else {
@@ -411,18 +414,18 @@ public class Client1 {
 
             System.out.println("Waiting for Bob\'s response to challenge...");
             message = in.readUTF();
-            System.out.println("DHC1:3");
+            // System.out.println("DHC1:3");
             parsedMsg = parseMessage(message, socketClient, out);
 
             if (!(parsedMsg == null)) {
-                System.out.println(Na + "\n\n\n" + parsedMsg[0] + "\n\n\n" + parsedMsg[1] + "\n\n\n" + parsedMsg[2] + "\n\n\n" + parsedMsg[3]);
+                // System.out.println(Na + "\n\n\n" + parsedMsg[0] + "\n\n\n" + parsedMsg[1] + "\n\n\n" + parsedMsg[2] + "\n\n\n" + parsedMsg[3]);
                 if(Na.equals(parsedMsg[4])) {
                     System.out.println("Bob responded successfuly to challenge. Sending challenge acknowledgement.");
                     message = "Alice,DH,Bob," + parsedMsg[5] + "," + String.valueOf(System.currentTimeMillis());
                     iv = utils.generateRandomIV();
                     // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
                     out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(message, _sharedKey, iv)) + ":" + iv);
-                    System.out.println("AQUI VOU EU!!!");
+                    // System.out.println("AQUI VOU EU!!!");
                     findCommonDate(socketClient, out, in);
                 }
 
