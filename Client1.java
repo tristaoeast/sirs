@@ -24,36 +24,58 @@ public class Client1 {
     private AES aes;
     private Utils utils;
     private GregorianCalendar cal;
+    private static boolean dbug = true;
+    private int freeSlots = 0;
 
-    public void Client1() {
+    public Client1() {
         // _calendar = new int[13][32][24];
         //_dh = new DiffieHellman();
         noncesMap = new TreeMap<String, Long>();
         aes = new AES();
         utils = new Utils();
 
-        for (int i = 1; i < 13; i++) {
-
-            Random generator = new Random();
-
-            for (int j = 1; j < 32; j++) {
-
-                for (int k = 0; k < 24; k++) {
-
-                    if ((k / 10) < 1) {
-
-                        _calendar[i][j][k] = 1;
+        for (int month = 1; month < 13 ; month++) {
+            // System.out.println("MONTHS!!!");
+            for (int day = 1; day < 32; day++) {
+                // System.out.println("DAYS!!!");
+                for (int hour = 8; hour < 21; hour++) {
+                    // System.out.println("DAYS!!!");
+                    int rand = utils.randInt(0, 10);
+                    // System.out.println("randInt: " + rand);
+                    if (rand == 0) {
+                        // System.out.println("Random0");
+                        _calendar[month][day][hour] = 0;
                     } else {
-                        boolean res = generator.nextBoolean();
-                        if (res) {
-                            _calendar[i][j][k] = 0;
-                        } else {
-                            _calendar[i][j][k] = 1;
-                        }
+                        // System.out.println("RandomElse");
+                        _calendar[month][day][hour] = 1;
+                        // freeSlots++;
                     }
                 }
             }
         }
+
+        // for (int i = 1; i < 13; i++) {
+
+        //     Random generator = new Random();
+
+        //     for (int j = 1; j < 32; j++) {
+
+        //         for (int k = 0; k < 24; k++) {
+
+        //             if ((k / 10) < 1) {
+
+        //                 _calendar[i][j][k] = 1;
+        //             } else {
+        //                 boolean res = generator.nextBoolean();
+        //                 if (res) {
+        //                     _calendar[i][j][k] = 0;
+        //                 } else {
+        //                     _calendar[i][j][k] = 1;
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     public String[] parseMessage(String msg, Socket socketClient, DataOutputStream out) throws IOException, Exception {
@@ -235,6 +257,8 @@ public class Client1 {
                             if (parsedMsg[3].equals("Yes")) {
                                 System.out.println("Found common date! Meeting with Bob scheduled to " + lastCheckedDay + "/" + lastCheckedMonth + "/14 at " + i + " hours.");
                                 _calendar[lastCheckedMonth][lastCheckedDay][i] = 1;
+                                --freeSlots;
+                                System.out.println("Free slots: " + freeSlots);
                                 return;
                             }
                         } else {
@@ -244,6 +268,8 @@ public class Client1 {
                     if (parsedMsg[3].equals("Yes")) {
                         System.out.println("Found common date! Meeting with Bob scheduled to " + lastCheckedDay + "/" + lastCheckedMonth + "/14 at " + i + " hours.");
                         _calendar[lastCheckedMonth][lastCheckedDay][i] = 1;
+                        --freeSlots;
+                        System.out.println("Free slots: " + freeSlots);
                         return;
                     }
                     lastCheckedDay++;
@@ -277,6 +303,8 @@ public class Client1 {
                             if (parsedMsg[3].equals("Yes")) {
                                 System.out.println("Found common date! Meeting with Bob scheduled to " + lastCheckedDay + "/" + lastCheckedMonth + "/14 at " + i + " hours.");
                                 _calendar[lastCheckedMonth][lastCheckedDay][i] = 1;
+                                --freeSlots;
+                                System.out.println("Free slots: " + freeSlots);
                                 return;
                             } else {
                                 System.out.println("BUSY");
@@ -289,6 +317,8 @@ public class Client1 {
                     if (parsedMsg[3].equals("Yes")) {
                         System.out.println("Found common date! Meeting with Bob scheduled to " + lastCheckedDay + "/" + lastCheckedMonth + "/14 at " + i + " hours.");
                         _calendar[lastCheckedMonth][lastCheckedDay][i] = 1;
+                        --freeSlots;
+                        System.out.println("Free slots: " + freeSlots);
                         return;
                     }
                     lastCheckedDay++;
@@ -322,12 +352,30 @@ public class Client1 {
             String[] parsedMsg = null;
 
             System.out.println("Please insert date interval [DD/MM-DD/MM]");
-            dateInterval = parseDateInput(getInput());
-            // dateInterval = parseDateInput("12/12-13/12");
+            if (!dbug)
+                dateInterval = parseDateInput(getInput());
+            else
+                dateInterval = parseDateInput("15/12-19/12");
             lastCheckedDay = dateInterval[0];
             lastCheckedMonth = dateInterval[1];
-            int limit =  6 * (dateInterval[2] - dateInterval[0] + 1) * (dateInterval[3] - dateInterval[1] + 1);
-            // System.out.println("Limit: "+limit);
+
+            // Compute free slots for the given interval
+            freeSlots = 0;
+            for (int tmonth = dateInterval[1]; tmonth <= dateInterval[3]; tmonth++) {
+                for (int tday = dateInterval[0]; tday <= dateInterval[2]; tday++) {
+                    for (int thour = 8; thour < 21; thour++) {
+                        // System.out.println(tmonth + "/" + tday + "-" + thour + "h --- Free? " + _calendar[tmonth][tday][thour] + "\nFree slots: " + freeSlots);
+                        if (_calendar[tmonth][tday][thour] == 0) {
+                            freeSlots++;
+                        }
+                    }
+                }
+            }
+            System.out.println("Initial free slots: " + freeSlots);
+
+
+            int limit =  10 * (dateInterval[2] - dateInterval[0] + 1) * (dateInterval[3] - dateInterval[1] + 1);
+            System.out.println("Limit: " + limit);
             int tmpCal[][][] = new int[13][32][24];
             for (int i = 1; i < 13; i++) {
                 for (int j = 1; j < 32; j++) {
@@ -350,6 +398,7 @@ public class Client1 {
                 }
                 if (_calendar[month][day][hour] != 0) {
                     System.out.println("I'm busy on thi date. Checking another date...");
+                    cnt++;
                     continue;
                 } else {
                     tmpCal[month][day][hour] = 1;
@@ -365,9 +414,12 @@ public class Client1 {
                         if (parsedMsg[3].equals("Yes")) {
                             System.out.println("Found common date! Meeting with Bob scheduled to " + lastCheckedDay + "/" + lastCheckedMonth + "/14 at " + hour + " hours.");
                             _calendar[lastCheckedMonth][lastCheckedDay][hour] = 1;
+                            --freeSlots;
+                            System.out.println("Free slots: " + freeSlots);
                             return;
                         } else {
                             System.out.println("Bob\'s busy.");
+                            cnt++;
                             continue;
                         }
                     } else {
@@ -379,7 +431,7 @@ public class Client1 {
             }
             if (!parsedMsg[3].equals("Yes")) {
                 System.out.println("Unable to find common date.");
-                String msg = "Alice,NODATE,No common date found," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis());
+                String msg = "Alice,CHECK,NODATE," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis());
                 String iv = utils.generateRandomIV();
                 // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
                 out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, _sharedKey, iv)) + ":" + iv);
@@ -756,8 +808,8 @@ public class Client1 {
             port = Integer.parseInt(args[1]);
         }
 
-
-        authenticateUser(correctHash);
+        if (!dbug)
+            authenticateUser(correctHash);
 
         // String input = "";
         // while(!input.equals("y")){
@@ -773,8 +825,11 @@ public class Client1 {
             // System.out.println("");
             System.out.println("[0] Exit");
             try {
-                int opt = Integer.parseInt(getInput());
-                // int opt = 1;
+                int opt = 1000;
+                if (!dbug)
+                    opt = Integer.parseInt(getInput());
+                else
+                    opt = 1;
                 if (opt == 0)
                     System.exit(0);
                 if (opt == 1) {

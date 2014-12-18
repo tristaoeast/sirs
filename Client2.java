@@ -25,7 +25,8 @@ public class Client2 {
     private ServerSocket serverSocket;
     private String _serverName;
     private int _serverPort;
-    // public static dbug = false;
+    private static boolean dbug = true;
+    private int freeSlots = 0;
 
     public Client2(int localPort, String serverName, int serverPort) throws IOException, SocketException {
 
@@ -37,28 +38,42 @@ public class Client2 {
         serverSocket = new ServerSocket(localPort);
         serverSocket.setSoTimeout(30000);
 
-        for (int i = 1; i < 13; i++) {
-
-            Random generator = new Random();
-
-            for (int j = 1; j < 32; j++) {
-
-                for (int k = 0; k < 24; k++) {
-
-                    if ((k / 10) < 1) {
-
-                        _calendar[i][j][k] = 1;
+        for (int month = 1; month < 13 ; month++) {
+            for (int day = 1; day < 32; day++) {
+                for (int hour = 8; hour < 21; hour++) {
+                    int rand = utils.randInt(0, 10);
+                    if (rand != 0) {
+                        _calendar[month][day][hour] = 1;
                     } else {
-                        boolean res = generator.nextBoolean();
-                        if (res) {
-                            _calendar[i][j][k] = 0;
-                        } else {
-                            _calendar[i][j][k] = 1;
-                        }
+                        _calendar[month][day][hour] = 0;
+                        // freeSlots++;
                     }
                 }
             }
         }
+
+        // for (int i = 1; i < 13; i++) {
+
+        //     Random generator = new Random();
+
+        //     for (int j = 1; j < 32; j++) {
+
+        //         for (int k = 0; k < 24; k++) {
+
+        //             if ((k / 10) < 1) {
+
+        //                 _calendar[i][j][k] = 1;
+        //             } else {
+        //                 boolean res = generator.nextBoolean();
+        //                 if (res) {
+        //                     _calendar[i][j][k] = 0;
+        //                 } else {
+        //                     _calendar[i][j][k] = 1;
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
     }
 
@@ -212,15 +227,25 @@ public class Client2 {
             DataInputStream in = new DataInputStream(inFromServer);
             String[] parsedMsg = null;
 
+            // Compute free slots for a given interval
+            freeSlots = 0;
+            for (int month = 12; month <= 12; month++) {
+                for (int day = 14; day <= 19; day++) {
+                    for (int hour = 8; hour < 21; hour++) {
+                        if (_calendar[month][day][hour] == 0)
+                            freeSlots++;
+                    }
+                }
+            }
+            System.out.println("Initial free slots: " + freeSlots);
+
             while (true) {
                 System.out.println("Waiting for scheduling request...");
                 message = in.readUTF();
                 parsedMsg = parseMessage(message, server, out);
 
                 if (!(parsedMsg == null)) {
-                    //System.out.println("Client1 says " + message);
-
-
+      
                     int month = 0, day = 0, hour = 0;
                     String[] split1 = parsedMsg[3].split("-");
                     String[] split2 = split1[0].split("/");
@@ -246,10 +271,15 @@ public class Client2 {
                             out.writeUTF("Bob:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, _sharedKey, iv)) + ":" + iv);
                             _calendar[month][day][hour] = 1;
                             System.out.println("Found common date! Meeting with Alice scheduled  to " + day + "/" + month + "/14 at " + hour + " hours.");
+                            --freeSlots;
+                            System.out.println("Free slots: " + freeSlots);
                             return;
                         }
-                    } else {
-                        break;
+                    } else if (parsedMsg[3].equals("NODATE")) {
+                        System.out.println("Unable to find common date.");
+                        --freeSlots;
+                        System.out.println("Free slots: " + freeSlots);
+                        return;
                     }
                 } else {
                     System.out.println("establishMeetingDate: parsedMsg == null.");
@@ -571,8 +601,8 @@ public class Client2 {
             port = Integer.parseInt(args[2]);
         }
 
-        // if(!dbug)
-        authenticateUser(correctHash);
+        if (!dbug)
+            authenticateUser(correctHash);
 
         bob = null;
         try {
@@ -595,10 +625,10 @@ public class Client2 {
             try {
                 Socket server = bob.waitConnection();
                 System.out.println("Meeting scheduling request received from Alice. Do you want to accept it? [y/n]");
-                // if(!dbug)
-                response = getInput();
-                // else
-                // response = "y";
+                if (!dbug)
+                    response = getInput();
+                else
+                    response = "y";
                 if (response.equals("y")) {
                     DataOutputStream out = new DataOutputStream(server.getOutputStream());
                     DataInputStream in = new DataInputStream(server.getInputStream());
