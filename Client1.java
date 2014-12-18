@@ -345,8 +345,8 @@ public class Client1 {
                 hour = utils.randInt(8, 20);
                 System.out.println("Checking date: " + day + "/" + month + "/14 - " + hour + "h");
                 if (tmpCal[month][day][hour] != 0) {
-                    continue;
                     System.out.println("ALready checked this date. Checking another date...");
+                    continue;
                 }
                 if (_calendar[month][day][hour] != 0) {
                     System.out.println("I'm busy on thi date. Checking another date...");
