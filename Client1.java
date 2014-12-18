@@ -322,12 +322,12 @@ public class Client1 {
             String[] parsedMsg = null;
 
             System.out.println("Please insert date interval [DD/MM-DD/MM]");
-            // dateInterval = parseDateInput(getInput());
-            dateInterval = parseDateInput("12/12-13/12");
+            dateInterval = parseDateInput(getInput());
+            // dateInterval = parseDateInput("12/12-13/12");
             lastCheckedDay = dateInterval[0];
             lastCheckedMonth = dateInterval[1];
             int limit =  6 * (dateInterval[2] - dateInterval[0] + 1) * (dateInterval[3] - dateInterval[1] + 1);
-            System.out.println("Limit: "+limit);
+            // System.out.println("Limit: "+limit);
             int tmpCal[][][] = new int[13][32][24];
             for (int i = 1; i < 13; i++) {
                 for (int j = 1; j < 32; j++) {
@@ -343,10 +343,13 @@ public class Client1 {
                 month = utils.randInt(dateInterval[1], dateInterval[3]);
                 day = utils.randInt(dateInterval[0], dateInterval[2]);
                 hour = utils.randInt(8, 20);
+                System.out.println("Checking date: " + day + "/" + month + "/14 - " + hour + "h");
                 if (tmpCal[month][day][hour] != 0) {
                     continue;
+                    System.out.println("ALready checked this date. Checking another date...");
                 }
                 if (_calendar[month][day][hour] != 0) {
+                    System.out.println("I'm busy on thi date. Checking another date...");
                     continue;
                 } else {
                     tmpCal[month][day][hour] = 1;
