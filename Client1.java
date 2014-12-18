@@ -345,7 +345,7 @@ public class Client1 {
                 hour = utils.randInt(8, 20);
                 System.out.println("Checking date: " + day + "/" + month + "/14 - " + hour + "h");
                 if (tmpCal[month][day][hour] != 0) {
-                    System.out.println("ALready checked this date. Checking another date...");
+                    System.out.println("Already checked this date. Checking another date...");
                     continue;
                 }
                 if (_calendar[month][day][hour] != 0) {
@@ -354,7 +354,7 @@ public class Client1 {
                 } else {
                     tmpCal[month][day][hour] = 1;
                     cnt++;
-                    System.out.println("Checking date: " + day + "/" + month + "/14 - " + hour + "h");
+                    // System.out.println("Checking date: " + day + "/" + month + "/14 - " + hour + "h");
                     String msg = "Alice,CHECK," + Integer.toString(day) + "/" + Integer.toString(month) + "/14-" + Integer.toString(hour) + "," + utils.generateRandomNonce() + "," + String.valueOf(System.currentTimeMillis());
                     String iv = utils.generateRandomIV();
                     // out.writeUTF("Alice:" + DatatypeConverter.printBase64Binary(aes.encrypt(msg, DatatypeConverter.parseBase64Binary(_sharedKeyBI.toString()), iv)) + ":" + iv);
